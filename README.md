@@ -5,7 +5,7 @@
 Get Go 1.17+ and then run:
 
 ```bash
-$ go install github.com/multiprocessio/datastation/dsq@latest
+$ go install github.com/multiprocessio/dsq@latest
 ```
 
 ## Usage
@@ -71,9 +71,10 @@ $ dsq testdata.csv
 
 ## Engine
 
-Under the hood dsq uses DataStation as a library and under that hood
-DataStation uses SQLite to power these kinds of SQL queries on
-arbitrary (structured) data.
+Under the hood dsq uses
+[DataStation](https://github.com/multiprocessio/datastation) as a
+library and under that hood DataStation uses SQLite to power these
+kinds of SQL queries on arbitrary (structured) data.
 
 ## Comparisons
 
