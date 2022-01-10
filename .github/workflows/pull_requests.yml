@@ -1,0 +1,21 @@
+name: Run tests
+
+on:
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'pull_request'
+    steps:
+    - uses: actions/checkout@master
+      with:
+        ref: ${{ github.ref }}
+    - run: go test -race -cover
+    - run: gofmt -w -s .
+    - run: ./scripts/fail_on_diff.sh
+    - run: go build ./examples/dump
