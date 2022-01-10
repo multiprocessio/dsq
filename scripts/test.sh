@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
-types="csv parquet json"
+types="csv tsv parquet json jsonl xlsx ods"
 
 for t in $types; do
     echo "Testing $t (pipe)."
