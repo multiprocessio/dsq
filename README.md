@@ -88,6 +88,26 @@ I'll do a more thorough and public benchmark.
 | octoql | https://github.com/cube2222/octosql | Slow | JSON, CSV, Excel, Parquet | Custom engine missing many features from SQLite | Mature |
 | dsq | Here | Ok | CSV, TSV, JSON, Newline-delimited JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | Uses SQLite | Not mature |
 
-## License, support, community, whatnot
+## Community
 
-See the repo's main [README.md](/README.md) for the details.
+[Join us on Discord](https://discord.gg/f2wQBc4bXX).
+
+## How can I help?
+
+Download the app and use it! Report bugs on
+[Discord](https://discord.gg/f2wQBc4bXX).
+
+Read about the architecture in [ARCHITECTURE.md](ARCHITECTURE.md). And
+if you want to make a fix, see [HACKING.md](HACKING.md).
+
+Before starting on any new feature though, check in on
+[Discord](https://discord.gg/f2wQBc4bXX)!
+
+## Subscribe
+
+If you want to hear about new features and how DataStation works under
+the hood, [sign up here](https://forms.gle/wH5fdxrxXwZHoNxk8).
+
+## License
+
+This software is licensed under an Apache 2.0 license.
