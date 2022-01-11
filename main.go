@@ -169,7 +169,7 @@ func main() {
 				}
 
 				if mimetype == "" {
-					log.Fatal("Unknown mimetype or file extension: %s.", mimetype)
+					log.Fatalf("Unknown mimetype or file extension: %s.", mimetype)
 				}
 				i += 1
 
