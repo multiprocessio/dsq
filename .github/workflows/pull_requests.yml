@@ -28,6 +28,7 @@ jobs:
       with:
         ref: ${{ github.ref }}
 
+    - run: ./scripts/ci/prepare_linux.sh
     - run: go build
     - run: ./scripts/test.sh
 
@@ -39,6 +40,8 @@ jobs:
       with:
         ref: ${{ github.ref }}
 
+    - run: ./scripts/ci/prepare_windows.ps1
+      shell: pwsh
     - run: go build
     - run: ./scripts/test.sh
       shell: bash
@@ -51,5 +54,6 @@ jobs:
       with:
         ref: ${{ github.ref }}
 
+    - run: ./scripts/ci/prepare_macos.sh
     - run: go build
     - run: ./scripts/test.sh
