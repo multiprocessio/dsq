@@ -15,10 +15,11 @@ jobs:
     - uses: actions/checkout@master
       with:
         ref: ${{ github.ref }}
+
+    - run: ./scripts/ci/prepare_linux.sh
     - run: go test -race -cover
     - run: gofmt -w -s .
     - run: ./scripts/fail_on_diff.sh
-    - run: go build ./examples/dump
 
   dsq-tests-ubuntu:
     runs-on: ubuntu-latest
@@ -28,6 +29,7 @@ jobs:
       with:
         ref: ${{ github.ref }}
 
+    - run: ./scripts/ci/prepare_linux.sh
     - run: go build
     - run: ./scripts/test.sh
 
@@ -39,6 +41,8 @@ jobs:
       with:
         ref: ${{ github.ref }}
 
+    - run: ./scripts/ci/prepare_windows.ps1
+      shell: pwsh
     - run: go build
     - run: ./scripts/test.sh
       shell: bash
@@ -51,5 +55,6 @@ jobs:
       with:
         ref: ${{ github.ref }}
 
+    - run: ./scripts/ci/prepare_macos.sh
     - run: go build
     - run: ./scripts/test.sh
