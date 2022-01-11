@@ -7,11 +7,21 @@ version of this, check out DataStation.
 
 ## Install
 
-Get Go 1.17+ and then run:
+Download the [latest
+release](https://github.com/multiprocessio/datastation/releases) for
+your system, unzip it, and add `dsq` to your $PATH.
+
+Or on macos/Linux:
 
 ```bash
-$ go install github.com/multiprocessio/dsq@latest
+$ curl -LO https://github.com/multiprocessio/dsq/releases/download/$version/dsq-$arch-x64-$version.zip
+$ unzip ./dsq-*.zip
+$ chmod +x ./dsq
+$ sudo mv dsq /usr/local/bin/dsq
 ```
+
+Where `$arch` is `linux` or `darwin` and `$version` is the version you
+want to install.
 
 ## Usage
 

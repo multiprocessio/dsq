@@ -1,0 +1,68 @@
+name: Build and publish artifacts
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+      with:
+        ref: ${{ github.ref }}
+
+    - run: ./scripts/ci/prepare_linux.sh
+    - run: echo "GIT_TAG=`git tag --points-at HEAD`" >> $GITHUB_ENV
+    - run: |
+        echo "RELEASE_ID=`curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/multiprocessio/dsq/releases/tags/$GIT_TAG | jq '.id'`" >> $GITHUB_ENV
+    - run: go build
+    - run: zip dsq-linux-x64-$GIT_TAG.zip dsq
+    - name: Upload on release
+      run: |
+        curl --fail \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/zip" \
+          --data-binary @./releases/dsq-linux-x64-$GIT_TAG.zip \
+          "https://uploads.github.com/repos/multiprocessio/dsq/releases/$RELEASE_ID/assets?name=dsq-linux-x64-$GIT_TAG.zip"
+
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@master
+      with:
+        ref: ${{ github.ref }}
+
+    - run: ./scripts/ci/prepare_macos.sh
+    - run: echo "GIT_TAG=`git tag --points-at HEAD`" >> $GITHUB_ENV
+    - run: |
+        echo "RELEASE_ID=`curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/multiprocessio/dsq/releases/tags/$GIT_TAG | jq '.id'`" >> $GITHUB_ENV
+    - run: go build
+    - run: zip dsq-darwin-x64-$GIT_TAG.zip dsq
+    - name: Upload release
+      run: |
+        curl --fail \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/zip" \
+          --data-binary @./releases/dsq-darwin-x64-$GIT_TAG.zip \
+          "https://uploads.github.com/repos/multiprocessio/dsq/releases/$RELEASE_ID/assets?name=dsq-darwin-x64-$GIT_TAG.zip"
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@master
+      with:
+        ref: ${{ github.ref }}
+
+    - run: ./scripts/ci/prepare_windows.ps1
+    - run: echo "GIT_TAG=$(git tag --points-at HEAD)" >> $Env:GITHUB_ENV
+    - run: |
+        echo "RELEASE_ID=$(curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/multiprocessio/dsq/releases/tags/$Env:GIT_TAG | jq '.id')" >> $Env:GITHUB_ENV
+    - run: go build
+    - run: zip dsq-win32-x64-$Env:GIT_TAG.zip dsq
+    - name: Upload release
+      run: |
+        curl --fail -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/zip" --data-binary "@./releases/dsq-win32-x64-$Env:GIT_TAG.zip" "https://uploads.github.com/repos/multiprocessio/dsq/releases/$Env:RELEASE_ID/assets?name=dsq-win32-x64-$Env:GIT_TAG.zip"
