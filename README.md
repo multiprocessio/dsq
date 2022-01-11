@@ -17,20 +17,6 @@ $ go install github.com/multiprocessio/dsq@latest
 
 You can either pipe data to `dsq` or you can pass a file name to it.
 
-When piping data to `dsq` you need to specify the file extension or MIME type.
-
-For example:
-
-```bash
-$ cat testdata.csv | dsq csv "SELECT * FROM {} LIMIT 1"
-```
-
-Or:
-
-```bash
-$ cat testdata.parquet | dsq parquet "SELECT COUNT(1) FROM {}"
-```
-
 If you are passing a file, it must have the usual extension for its
 content type.
 
@@ -46,7 +32,24 @@ Or:
 $ dsq testdata.ndjson "SELECT name, AVG(time) FROM {} GROUP BY name ORDER BY AVG(time) DESC"
 ```
 
-## Multiple files and joins
+### Piping data to dsq
+
+When piping data to `dsq` you need to set the `-s` flag and specify
+the file extension or MIME type.
+
+For example:
+
+```bash
+$ cat testdata.csv | dsq -s csv "SELECT * FROM {} LIMIT 1"
+```
+
+Or:
+
+```bash
+$ cat testdata.parquet | dsq -s parquet "SELECT COUNT(1) FROM {}"
+```
+
+### Multiple files and joins
 
 You can pass multiple files to DSQ. As long as they are supported data
 files in a valid format, you can run SQL against all files as
@@ -62,7 +65,7 @@ $ dsq testdata/join/users.csv testdata/join/ages.json \
       "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"
 ```
 
-## Transforming data to JSON without querying
+### Transforming data to JSON without querying
 
 As a shorthand for `dsq testdata.csv "SELECT * FROM {}"` to convert
 supported file types to JSON you can skip the query and the converted
