@@ -1,5 +1,10 @@
 # Run SQL queries against JSON, CSV, Excel, Parquet, and more
 
+This is a CLI companion to
+[DataStation](https://github.com/multiprocessio/datastation) (a GUI)
+for running SQL queries against data files. So if you want the GUI
+version of this, check out DataStation.
+
 ## Install
 
 Get Go 1.17+ and then run:
@@ -82,12 +87,12 @@ The speed column is based on rough benchmarks based on [q's
 benchmarks](https://github.com/harelba/q/blob/master/test/BENCHMARK.md). Eventually
 I'll do a more thorough and public benchmark.
 
-| Name | Link | Speed | Supported File Types | Engine | Maturity |
+| Name | Link | Speed | Supported File Types | Engine |
 |----|-|-|-|-|------------------------------------------------------------------------|
-| q | http://harelba.github.io/q/ | Fast | CSV, TSV | Uses SQLite | Mature |
-| textql | https://github.com/dinedal/textql | Ok | CSV, TSV | Uses SQLite | Mature |
-| octoql | https://github.com/cube2222/octosql | Slow | JSON, CSV, Excel, Parquet | Custom engine missing many features from SQLite | Mature |
-| dsq | Here | Ok | CSV, TSV, JSON, Newline-delimited JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | Uses SQLite | Not mature |
+| q | http://harelba.github.io/q/ | Fast | CSV, TSV | Uses SQLite |
+| textql | https://github.com/dinedal/textql | Ok | CSV, TSV | Uses SQLite |
+| octoql | https://github.com/cube2222/octosql | Slow | JSON, CSV, Excel, Parquet | Custom engine missing many features from SQLite |
+| dsq | Here | Ok | CSV, TSV, JSON, Newline-delimited JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | Uses SQLite |
 
 ## Community
 
