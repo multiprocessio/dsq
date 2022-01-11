@@ -1,4 +1,4 @@
-# Run SQL queries against JSON, CSV, Excel, Parquet, and more
+# Commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more.
 
 This is a CLI companion to
 [DataStation](https://github.com/multiprocessio/datastation) (a GUI)
