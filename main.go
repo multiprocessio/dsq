@@ -25,9 +25,9 @@ func isinpipe() bool {
 	return !(fi.Mode()&os.ModeNamedPipe == 0)
 }
 
-func resolveContentType(fileExtensionOrContentType string) string {
+func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 	if strings.Contains(fileExtensionOrContentType, "/") {
-		return fileExtensionOrContentType
+		return runner.MimeType(fileExtensionOrContentType)
 	}
 
 	return runner.GetMimeType("x."+fileExtensionOrContentType, runner.ContentTypeInfo{})
@@ -41,7 +41,7 @@ func getResult(res interface{}) error {
 
 	mimetype := resolveContentType(arg)
 
-	cti := runner.ContentTypeInfo{Type: mimetype}
+	cti := runner.ContentTypeInfo{Type: string(mimetype)}
 
 	// isinpipe() is sometimes incorrect. If the first arg
 	// is a file, fall back to acting like this isn't in a
@@ -98,7 +98,7 @@ func main() {
 		}
 
 		if arg == "-h" || arg == "--help" {
-			log.Println("See the README on Github for details.\n\nhttps://github.com/multiprocessio/datastation/blob/main/runner/cmd/dsq/README.md")
+			log.Println("See the README on Github for details.\n\nhttps://github.com/multiprocessio/dsq/blob/main/README.md")
 			return
 		}
 

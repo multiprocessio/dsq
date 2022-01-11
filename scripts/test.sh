@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 types="csv tsv parquet json jsonl xlsx ods"
 
