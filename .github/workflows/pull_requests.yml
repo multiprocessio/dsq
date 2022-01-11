@@ -20,7 +20,6 @@ jobs:
     - run: go test -race -cover
     - run: gofmt -w -s .
     - run: ./scripts/fail_on_diff.sh
-    - run: go build ./examples/dump
 
   dsq-tests-ubuntu:
     runs-on: ubuntu-latest
