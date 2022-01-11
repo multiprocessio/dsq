@@ -2,28 +2,18 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/multiprocessio/datastation/runner"
 
 	"github.com/google/uuid"
 )
-
-func isinpipe() bool {
-	fi, _ := os.Stdin.Stat()
-	if fi == nil {
-		return false
-	}
-
-	// This comes back incorrect in automated environments like Github Actions.
-	return !(fi.Mode()&os.ModeNamedPipe == 0)
-}
 
 func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 	if strings.Contains(fileExtensionOrContentType, "/") {
@@ -33,115 +23,114 @@ func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 	return runner.GetMimeType("x."+fileExtensionOrContentType, runner.ContentTypeInfo{})
 }
 
-var firstNonFlagArg = ""
-
-func getResult(res interface{}) error {
-	out := bytes.NewBuffer(nil)
-	arg := firstNonFlagArg
-
-	mimetype := resolveContentType(arg)
-
-	cti := runner.ContentTypeInfo{Type: string(mimetype)}
-
-	// isinpipe() is sometimes incorrect. If the first arg
-	// is a file, fall back to acting like this isn't in a
-	// pipe.
-	runAsFile := !isinpipe()
-	if !runAsFile && cti.Type == arg {
-		if _, err := os.Stat(arg); err == nil {
-			runAsFile = true
-		}
-	}
-
-	if !runAsFile {
-		if mimetype == "" {
-			return fmt.Errorf(`First argument when used in a pipe should be file extension or content type. e.g. 'cat test.csv | dsq csv "SELECT * FROM {}"'`)
-		}
-
-		err := runner.TransformReader(os.Stdin, "", cti, out)
-		if err != nil {
-			return err
-		}
-	} else {
-		if arg == "" {
-			return fmt.Errorf(`First argument when not used in a pipe should be a file. e.g. 'dsq test.csv "SELECT COUNT(1) FROM {}"'`)
-		}
-
-		err := runner.TransformFile(arg, runner.ContentTypeInfo{}, out)
-		if err != nil {
-			return err
-		}
-	}
-
-	decoder := json.NewDecoder(out)
-	return decoder.Decode(res)
+func openTruncate(out string) (*os.File, error) {
+	base := filepath.Dir(out)
+	_ = os.Mkdir(base, os.ModePerm)
+	return os.OpenFile(out, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 }
+
+func evalFileInto(file string, out *os.File) error {
+	if file == "" {
+		return fmt.Errorf(`First argument when not used in a pipe should be a file. e.g. 'dsq test.csv "SELECT COUNT(1) FROM {}"'`)
+	}
+
+	mimetype := runner.GetMimeType(file, runner.ContentTypeInfo{})
+	if mimetype == "" {
+		return fmt.Errorf("Unknown mimetype for file: %s.", file)
+	}
+
+	return runner.TransformFile(file, runner.ContentTypeInfo{}, out)
+}
+
+func getShape(resultFile, panelId string) *runner.Shape {
+	s, err := runner.ShapeFromFile(resultFile, panelId, 10_000, 100)
+	if err != nil {
+		switch t := err.(type) {
+		case *runner.DSError:
+			if t.Name == "NotAnArrayOfObjectsError" {
+				rest := "."
+				if panelId != "" {
+					rest = ": " + panelId + "."
+				}
+				log.Fatalf("Input is not an array of objects%s", rest)
+			}
+
+			log.Fatal(err)
+		default:
+			log.Fatal(err)
+		}
+	}
+
+	return s
+}
+
+const HELP = `dsq - commandline SQL engine for data files
+
+Usage:  dsq [file...] $query
+        dsq $file [query]
+        cat $file | dsq -s $filetype [query]
+
+dsq is a tool for running SQL on one or more data files. It uses
+SQLite's SQL dialect. Files as tables are accessible via "{N}" where N
+is the 0-based index of the file in the commandline.
+
+The shorthand "{}" is replaced with "{0}".
+
+Examples:
+
+    # This simply dumps the CSV as JSON
+    $ dsq test.csv
+
+    # This dumps the first 10 rows of the parquet file as JSON.
+    $ dsq data.parquet "SELECT * FROM {} LIMIT 10"
+
+    # This joins two datasets of differing origin types (CSV and JSON).
+    $ dsq testdata/join/users.csv testdata/join/ages.json \
+          "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"
+
+See the repo for more details: https://github.com/multiprocessio/dsq.`
 
 func main() {
 	log.SetFlags(0)
 	runner.Verbose = false
-	inputTable := "{}"
 	var nonFlagArgs []string
-	for i, arg := range os.Args[1:] {
-		if arg == "-i" || arg == "--input-table-alias" {
-			if i > len(os.Args)-2 {
-				log.Fatal(`Expected input table alias after flag. e.g. 'dsq -i XX names.csv "SELECT * FROM XX"'`)
-			}
-
-			inputTable = os.Args[i+1]
-			continue
-		}
-
+	stdin := false
+	for _, arg := range os.Args[1:] {
 		if arg == "-v" || arg == "--verbose" {
 			runner.Verbose = true
 			continue
 		}
 
+		if arg == "-s" || arg == "--stdin" {
+			stdin = true
+			continue
+		}
+
 		if arg == "-h" || arg == "--help" {
-			log.Println("See the README on Github for details.\n\nhttps://github.com/multiprocessio/dsq/blob/main/README.md")
+			log.Println(HELP)
 			return
 		}
 
 		nonFlagArgs = append(nonFlagArgs, arg)
 	}
 
-	if len(nonFlagArgs) > 0 {
-		firstNonFlagArg = nonFlagArgs[0]
+	lastNonFlagArg := ""
+	files := nonFlagArgs
+
+	// Empty marker meaning to process from stdin
+	if stdin {
+		files = append([]string{""}, files...)
 	}
 
-	lastNonFlagArg := ""
 	if len(nonFlagArgs) > 1 {
 		lastNonFlagArg = nonFlagArgs[len(nonFlagArgs)-1]
-	}
-
-	var res []map[string]interface{}
-	err := getResult(&res)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if lastNonFlagArg == "" {
-		encoder := json.NewEncoder(os.Stdout)
-		err := encoder.Encode(res)
-		if err != nil {
-			log.Fatal(err)
+		if strings.Contains(lastNonFlagArg, " ") {
+			files = files[:len(files)-1]
 		}
-
-		return
 	}
 
-	sampleSize := 50
-	shape, err := runner.GetArrayShape(firstNonFlagArg, res, sampleSize)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	p0 := runner.PanelInfo{
-		ResultMeta: runner.PanelResult{
-			Shape: *shape,
-		},
-		Id:   uuid.New().String(),
-		Name: uuid.New().String(),
+	if len(files) == 0 {
+		log.Fatal("No input files.")
 	}
 
 	projectTmp, err := ioutil.TempFile("", "dsq-project")
@@ -153,10 +142,96 @@ func main() {
 		Id: projectTmp.Name(),
 		Pages: []runner.ProjectPage{
 			{
-				Panels: []runner.PanelInfo{p0},
+				Panels: nil,
 			},
 		},
 	}
+
+	for i := 0; i < len(files); i++ {
+		file := files[i]
+		panelId := uuid.New().String()
+		resultFile := runner.GetPanelResultsFile(project.Id, panelId)
+		out, err := openTruncate(resultFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		readFromStdin := false
+		if file == "" {
+			b, err := ioutil.ReadAll(os.Stdin)
+			if err == nil {
+				if i == len(files)-1 {
+					log.Fatal("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
+				}
+				mimetype := files[i+1]
+				if !strings.Contains(mimetype, "/") {
+					mimetype = string(runner.GetMimeType("x."+mimetype, runner.ContentTypeInfo{}))
+				}
+
+				if mimetype == "" {
+					log.Fatalf("Unknown mimetype or file extension: %s.", mimetype)
+				}
+				i += 1
+
+				cti := runner.ContentTypeInfo{Type: string(mimetype)}
+				err := runner.TransformReader(bytes.NewReader(b), "", cti, out)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				s := getShape(resultFile, "")
+
+				project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
+					ResultMeta: runner.PanelResult{
+						Shape: *s,
+					},
+					Id:   panelId,
+					Name: uuid.New().String(),
+				})
+
+				readFromStdin = true
+			}
+
+			continue
+		}
+
+		if !readFromStdin {
+			err := evalFileInto(file, out)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		s := getShape(resultFile, file)
+
+		project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
+			ResultMeta: runner.PanelResult{
+				Shape: *s,
+			},
+			Id:   panelId,
+			Name: uuid.New().String(),
+		})
+
+		out.Close()
+	}
+
+	// No query, just dump transformed file directly out
+	if lastNonFlagArg == "" {
+		resultFile := runner.GetPanelResultsFile(project.Id, project.Pages[0].Panels[0].Id)
+		fd, err := os.Open(resultFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer fd.Close()
+
+		_, err = io.Copy(os.Stdout, fd)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return
+	}
+
 	connector, tmp, err := runner.MakeTmpSQLiteConnector()
 	if err != nil {
 		log.Fatal(err)
@@ -165,7 +240,10 @@ func main() {
 	project.Connectors = append(project.Connectors, *connector)
 
 	query := lastNonFlagArg
-	query = strings.ReplaceAll(query, inputTable, "DM_getPanel(0)")
+	query = strings.ReplaceAll(query, "{}", "DM_getPanel(0)")
+	for i := 0; i < len(project.Pages[0].Panels); i++ {
+		query = strings.ReplaceAll(query, fmt.Sprintf("{%d}", i), fmt.Sprintf("DM_getPanel(%d)", i))
+	}
 	panel := &runner.PanelInfo{
 		Type:    runner.DatabasePanel,
 		Content: query,
@@ -178,12 +256,7 @@ func main() {
 		},
 	}
 
-	panelResultLoader := func(_, _ string, out interface{}) error {
-		r := out.(*[]map[string]interface{})
-		*r = res
-		return nil
-	}
-	err = runner.EvalDatabasePanel(project, 0, panel, panelResultLoader)
+	err = runner.EvalDatabasePanel(project, 0, panel, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -194,5 +267,8 @@ func main() {
 		log.Fatalf("Could not open results file: %s", err)
 	}
 
-	io.Copy(os.Stdout, fd)
+	_, err = io.Copy(os.Stdout, fd)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

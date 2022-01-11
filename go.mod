@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220111000048-113ee79b8e42
+	github.com/multiprocessio/datastation/runner v0.0.0-20220111043233-bb75221f520e
 )
 
 require (
