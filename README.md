@@ -46,6 +46,22 @@ Or:
 $ dsq testdata.ndjson "SELECT name, AVG(time) FROM {} GROUP BY name ORDER BY AVG(time) DESC"
 ```
 
+## Multiple files and joins
+
+You can pass multiple files to DSQ. As long as they are supported data
+files in a valid format, you can run SQL against all files as
+tables. Each table can be acessed by the string `{N}` where `N` is the
+0-based index of the file in the list of files passed on the
+commandline.
+
+For example this joins two datasets of differing origin types (CSV and
+JSON).
+
+```bash
+$ dsq testdata/join/users.csv testdata/join/ages.json \
+      "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"
+```
+
 ## Transforming data to JSON without querying
 
 As a shorthand for `dsq testdata.csv "SELECT * FROM {}"` to convert
