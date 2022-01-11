@@ -64,6 +64,32 @@ func getShape(resultFile, panelId string) *runner.Shape {
 	return s
 }
 
+const HELP = `dsq - commandline SQL engine for data files
+
+Usage:  dsq [file...] $query
+        dsq $file [query]
+        cat $file | dsq -s $filetype [query]
+
+dsq is a tool for running SQL on one or more data files. It uses
+SQLite's SQL dialect. Files as tables are accessible via "{N}" where N
+is the 0-based index of the file in the commandline.
+
+The shorthand "{}" is replaced with "{0}".
+
+Examples:
+
+    # This simply dumps the CSV as JSON
+    $ dsq test.csv
+
+    # This dumps the first 10 rows of the parquet file as JSON.
+    $ dsq data.parquet "SELECT * FROM {} LIMIT 10"
+
+    # This joins two datasets of differing origin types (CSV and JSON).
+    $ dsq testdata/join/users.csv testdata/join/ages.json \
+          "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"
+
+See the repo for more details: https://github.com/multiprocessio/dsq.`
+
 func main() {
 	log.SetFlags(0)
 	runner.Verbose = false
@@ -81,7 +107,7 @@ func main() {
 		}
 
 		if arg == "-h" || arg == "--help" {
-			log.Println("See the README on Github for details.\n\nhttps://github.com/multiprocessio/dsq/blob/main/README.md")
+			log.Println(HELP)
 			return
 		}
 
