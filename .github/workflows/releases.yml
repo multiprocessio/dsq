@@ -19,6 +19,7 @@ jobs:
         echo "RELEASE_ID=`curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/multiprocessio/dsq/releases/tags/$GIT_TAG | jq '.id'`" >> $GITHUB_ENV
     - run: go build -ldflags "-X main.Version=$GIT_TAG"
     - run: zip dsq-linux-x64-$GIT_TAG.zip dsq
+    - run: ls
     - name: Upload on release
       run: |
         curl --fail \
