@@ -63,7 +63,7 @@ $ cat testdata.parquet | dsq -s parquet "SELECT COUNT(1) FROM {}"
 
 You can pass multiple files to DSQ. As long as they are supported data
 files in a valid format, you can run SQL against all files as
-tables. Each table can be acessed by the string `{N}` where `N` is the
+tables. Each table can be accessed by the string `{N}` where `N` is the
 0-based index of the file in the list of files passed on the
 commandline.
 
