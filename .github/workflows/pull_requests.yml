@@ -3,8 +3,6 @@ name: Run tests
 on:
   pull_request:
     branches: [main]
-  release:
-    types: [published]
 
 jobs:
   test:
