@@ -66,7 +66,7 @@ func getShape(resultFile, panelId string) *runner.Shape {
 
 var Version = "latest"
 
-var HELP = `dsq (Version `+Version+`) - commandline SQL engine for data files
+var HELP = `dsq (Version ` + Version + `) - commandline SQL engine for data files
 
 Usage:  dsq [file...] $query
         dsq $file [query]
