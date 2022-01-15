@@ -7,9 +7,35 @@ version of this, check out DataStation.
 
 ## Install
 
-Get Go 1.17+ and then run:
+Binaries for amd64 (x86_64) are provided for each release.
+
+### macOS, Linux
+
+On macOS or Linux, you can run the following:
 
 ```bash
+$ VERSION=0.1.0
+$ curl -LO "https://github.com/multiprocessio/dsq/releases/download/$VERSION/dsq-$(uname -s | awk '{ print tolower($0) }')-x64-$VERSION.zip"
+$ unzip dsq*.zip
+$ sudo mv dsq /usr/local/bin/dsq
+```
+
+Or install manually from the [releases
+page](https://github.com/multiprocessio/dsq/releases), unzip and add
+`dsq` to your `$PATH`.
+
+### Windows
+
+Download the [latest Windows
+release](https://github.com/multiprocessio/dsq/releases), unzip it,
+and add `dsq` to your `$PATH`.
+
+### Manual
+
+If you are on another platform or architecture or want to grab the
+latest release, you can do so with Go 1.17+:
+
+```
 $ go install github.com/multiprocessio/dsq@latest
 ```
 
@@ -127,7 +153,7 @@ Before starting on any new feature though, check in on
 
 ## Subscribe
 
-If you want to hear about new features and how DataStation works under
+If you want to hear about new features and how this works under
 the hood, [sign up here](https://forms.gle/wH5fdxrxXwZHoNxk8).
 
 ## License
