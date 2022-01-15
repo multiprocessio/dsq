@@ -32,6 +32,13 @@ and add `dsq` to your `$PATH`.
 
 ### Manual
 
+If you are on another platform or architecture or want to grab the
+latest release, you can do so with Go 1.17+:
+
+```
+$ go install github.com/multiprocessio/dsq@latest
+```
+
 ## Usage
 
 You can either pipe data to `dsq` or you can pass a file name to it.
