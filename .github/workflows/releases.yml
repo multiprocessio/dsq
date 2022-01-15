@@ -62,7 +62,7 @@ jobs:
     - run: |
         echo "RELEASE_ID=$(curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/multiprocessio/dsq/releases/tags/$Env:GIT_TAG | jq '.id')" >> $Env:GITHUB_ENV
     - run: go build -ldflags "-X main.Version=$Env:GIT_TAG"
-    - run: zip dsq-win32-x64-$Env:GIT_TAG.zip dsq
+    - run: zip dsq-win32-x64-$Env:GIT_TAG.zip dsq.exe
     - name: Upload release
       run: |
         curl --fail -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/zip" --data-binary "@./dsq-win32-x64-$Env:GIT_TAG.zip" "https://uploads.github.com/repos/multiprocessio/dsq/releases/$Env:RELEASE_ID/assets?name=dsq-win32-x64-$Env:GIT_TAG.zip"
