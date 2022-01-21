@@ -69,3 +69,10 @@ expected="No input files."
 got="$(./dsq 2>&1 || true)"
 
 test "Handles no arguments correctly" "$expected" "$got"
+
+# Not an array of data test
+
+expected="Input is not an array of objects: testdata/bad/not_an_array.json."
+got="$(./dsq 2>&1 || true)"
+
+test "Does not allow querying on non-array data" "$expected" "$got"
