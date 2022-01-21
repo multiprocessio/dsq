@@ -24,6 +24,23 @@ for t in $types; do
     fi
 done
 
+function test() {
+    name="$1"
+    expected="$2"
+    got="$3"
+
+    if ! [[ "$expected" == "$got" ]]; then
+	printf "[FAIL] %s\n" "$name"
+	diff <(echo "$got") <(echo "$expected")
+	exit 1
+    fi
+
+    printf "[SUCCESS] %s\n" "$name"
+}
+
+
+# Join test
+
 joined="$(./dsq testdata/join/users.csv testdata/join/ages.json "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id")"
 expected='[{"age":88,"name":"Ted"}
 ,
@@ -31,8 +48,31 @@ expected='[{"age":88,"name":"Ted"}
 ,
 {"age":33,"name":"Micah"}
 ]'
-if ! [[ "$joined" == "$expected" ]]; then
-    echo "Bad join:"
-    diff <(echo "$joined") <(echo "$expected")
-    exit 1
-fi
+
+test "Join two file-tabless" "$expected" "$joined"
+
+# Nested values test
+
+got=`./dsq ./testdata/nested/nested.json 'select name, "location.city" city, "location.address.number" address_number from {}'`
+expected='[{"address_number":1002,"city":"Toronto","name":"Agarrah"}
+,
+{"address_number":19,"city":"Mexico City","name":"Minoara"}
+,
+{"address_number":12,"city":"New London","name":"Fontoon"}
+]'
+
+test "Extract nested values" "$expected" "$got"
+
+# No input test
+
+expected="No input files."
+got="$(./dsq 2>&1 || true)"
+
+test "Handles no arguments correctly" "$expected" "$got"
+
+# Not an array of data test
+
+expected="Input is not an array of objects: testdata/bad/not_an_array.json."
+got="$(./dsq testdata/bad/not_an_array.json 2>&1 || true)"
+
+test "Does not allow querying on non-array data" "$expected" "$got"

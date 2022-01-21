@@ -104,13 +104,72 @@ $ dsq testdata.csv
 [{...some csv data...},{...some csv data...},...]
 ```
 
+### Nested object values
+
+It's easiest to show an example. Let's say you have the following JSON file called `user_addresses.json`:
+
+```json
+[
+  {"name": "Agarrah", "location": {"city": "Toronto", "address": { "number": 1002 }}},
+  {"name": "Minoara", "location": {"city": "Mexico City", "address": { "number": 19 }}},
+  {"name": "Fontoon", "location": {"city": "New London", "address": { "number": 12 }}}
+]
+```
+
+You can query the nested fields like so:
+
+```sql
+$ dsq user_addresses.json 'SELECT name, "location.city" FROM {}'
+```
+
+And if you need to disambiguate the table:
+
+```sql
+$ dsq user_addresses.json 'SELECT name, {}."location.city" FROM {}'
+```
+
+#### Nested objects explained
+
+Nested objects are collapsed and their new column name becomes the
+JSON path to the value connected by `.`. Actual dots in the path must
+be escaped with a backslash. Since `.` is a special character in SQL
+you must quote the whole new column name.
+
+#### Limitation: nested arrays
+
+Nested objects within arrays are still ignored/dropped by `dsq`. So if
+you have data like this:
+
+```json
+[
+  {"field1": [1]},
+  {"field1": [2]},
+]
+```
+
+You cannot access any data within `field1`. You will need to
+preprocess your data with some other tool.
+
+#### Limitation: whole object retrieval
+
+You cannot query whole objects, you must ask for a specific path that
+results in a scalar value.
+
+For example in the `user_addresses.json` example above you CANNOT do this:
+
+```sql
+$ dsq user_addresses.json 'SELECT name, {}."location" FROM {}'
+```
+
+Because `location` is not a scalar value. It is an object.
+
 ## Supported Data Types
 
 | Name | File Extension(s) | Notes |
 |-----------|-|---------------------|
 | CSV | `csv` ||
 | TSV | `tsv`, `tab` ||
-| JSON | `json` | Must be an array of objects. Nested object fields are ignored. |
+| JSON | `json` | Must be an array of objects. |
 | Newline-delimited JSON | `ndjson`, `jsonl` ||
 | Parquet | `parquet` ||
 | Excel | `xlsx`, `xls` | Currently only works if there is only one sheet. |
