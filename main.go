@@ -45,20 +45,15 @@ func evalFileInto(file string, out *os.File) error {
 func getShape(resultFile, panelId string) *runner.Shape {
 	s, err := runner.ShapeFromFile(resultFile, panelId, 10_000, 100)
 	if err != nil {
-		switch t := err.(type) {
-		case *runner.DSError:
-			if t.Name == "NotAnArrayOfObjectsError" {
-				rest := "."
-				if panelId != "" {
-					rest = ": " + panelId + "."
-				}
-				log.Fatalf("Input is not an array of objects%s", rest)
-			}
+		log.Fatal(err)
+	}
 
-			log.Fatal(err)
-		default:
-			log.Fatal(err)
+	if !runner.ShapeIsObjectArray(*s) {
+		rest := "."
+		if panelId != "" {
+			rest = ": " + panelId + "."
 		}
+		log.Fatalf("Input is not an array of objects%s", rest)
 	}
 
 	return s

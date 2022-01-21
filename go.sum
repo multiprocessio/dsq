@@ -279,8 +279,8 @@ github.com/mattn/go-sqlite3 v1.14.10 h1:MLn+5bFRlWMGoSRmJour3CL1w/qL96mvipqpwQW/
 github.com/mattn/go-sqlite3 v1.14.10/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 h1:RWengNIwukTxcDr9M+97sNutRR1RKhG96O6jWumTTnw=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826/go.mod h1:TaXosZuwdSHYgviHp1DAtfrULt5eUgsSMsZf+YrPgl8=
-github.com/multiprocessio/datastation/runner v0.0.0-20220111043233-bb75221f520e h1:IoXSzb3u0Pj7NUb+Q2hMbNy4Ks7EJMiLcC1RiicoxKc=
-github.com/multiprocessio/datastation/runner v0.0.0-20220111043233-bb75221f520e/go.mod h1:t2Kwx8PrSBLbyz1NkZ33dhy6K0j2LdmqCuQKsWMl2wk=
+github.com/multiprocessio/datastation/runner v0.0.0-20220121193558-655be32ea4ce h1:qbtDVEZ2VRfVBQNHOlmqcliQjcnKtP/mvEUYksz6AVo=
+github.com/multiprocessio/datastation/runner v0.0.0-20220121193558-655be32ea4ce/go.mod h1:t2Kwx8PrSBLbyz1NkZ33dhy6K0j2LdmqCuQKsWMl2wk=
 github.com/multiprocessio/go-openoffice v0.0.0-20220110223005-5025ee21b43f/go.mod h1:mnoP4hoU2Ef1zWhAmIvDxAydPWlSKmHjBJ2lKby0qYM=
 github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956 h1:WVofL03Eq+z3LbDOfH5eKzu2U85LFZZngOMBlNaO/H0=
 github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956/go.mod h1:JMhCobMOTCgIL4EwBPVrRB60Iq9hknRP9mX/MYiWHAc=
