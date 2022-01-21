@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner e665cd7
+	github.com/multiprocessio/datastation/runner v0.0.0-20220121201025-e665cd7ac0fc
 )
 
 require (
@@ -48,7 +48,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/richardlehane/mscfb v1.0.3 // indirect
 	github.com/richardlehane/msoleps v1.0.1 // indirect
-	github.com/sijms/go-ora/v2 v2.2.17 // indirect
+	github.com/sijms/go-ora/v2 v2.2.23-0.20220121124241-08ee0a8e5243 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/snowflakedb/gosnowflake v1.6.5 // indirect
 	github.com/xitongsys/parquet-go v1.6.2 // indirect

@@ -279,8 +279,8 @@ github.com/mattn/go-sqlite3 v1.14.10 h1:MLn+5bFRlWMGoSRmJour3CL1w/qL96mvipqpwQW/
 github.com/mattn/go-sqlite3 v1.14.10/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 h1:RWengNIwukTxcDr9M+97sNutRR1RKhG96O6jWumTTnw=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826/go.mod h1:TaXosZuwdSHYgviHp1DAtfrULt5eUgsSMsZf+YrPgl8=
-github.com/multiprocessio/datastation/runner v0.0.0-20220121193558-655be32ea4ce h1:qbtDVEZ2VRfVBQNHOlmqcliQjcnKtP/mvEUYksz6AVo=
-github.com/multiprocessio/datastation/runner v0.0.0-20220121193558-655be32ea4ce/go.mod h1:t2Kwx8PrSBLbyz1NkZ33dhy6K0j2LdmqCuQKsWMl2wk=
+github.com/multiprocessio/datastation/runner v0.0.0-20220121201025-e665cd7ac0fc h1:tsuIpHH5NVI2564FFca6HOymWjBFKLCHGkHE/EHSGcw=
+github.com/multiprocessio/datastation/runner v0.0.0-20220121201025-e665cd7ac0fc/go.mod h1:SJarOXxjHoayZ+eh/Mbq4adryfg9G+YGIy7txpZJeE4=
 github.com/multiprocessio/go-openoffice v0.0.0-20220110223005-5025ee21b43f/go.mod h1:mnoP4hoU2Ef1zWhAmIvDxAydPWlSKmHjBJ2lKby0qYM=
 github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956 h1:WVofL03Eq+z3LbDOfH5eKzu2U85LFZZngOMBlNaO/H0=
 github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956/go.mod h1:JMhCobMOTCgIL4EwBPVrRB60Iq9hknRP9mX/MYiWHAc=
@@ -309,8 +309,8 @@ github.com/richardlehane/msoleps v1.0.1/go.mod h1:BWev5JBpU9Ko2WAgmZEuiz4/u3ZYTK
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/ruudk/golang-pdf417 v0.0.0-20181029194003-1af4ab5afa58/go.mod h1:6lfFZQK844Gfx8o5WFuvpxWRwnSoipWe/p622j1v06w=
-github.com/sijms/go-ora/v2 v2.2.17 h1:7w1lkgxorhhx/xG5fS/hWhLqBw9BrSFxTvx9oBj0Z0E=
-github.com/sijms/go-ora/v2 v2.2.17/go.mod h1:jzfAFD+4CXHE+LjGWFl6cPrtiIpQVxakI2gvrMF2w6Y=
+github.com/sijms/go-ora/v2 v2.2.23-0.20220121124241-08ee0a8e5243 h1:1PeP8VvDf/iPa1t1R/Uk1t3v4duqXaEnBuRGdAPMldo=
+github.com/sijms/go-ora/v2 v2.2.23-0.20220121124241-08ee0a8e5243/go.mod h1:0p/cbn0bdNYv2k6LPsSpGFwDpz0Tdg6A2KF+rT4SrW0=
 github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/snowflakedb/gosnowflake v1.6.5 h1:z7WfTtHly52GBX0VXVrelU285oiDKj/r3nTJ++YCK9o=
