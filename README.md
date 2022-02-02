@@ -188,7 +188,7 @@ kinds of SQL queries on arbitrary (structured) data.
 ## Comparisons
 
 | Name | Link | Supported File Types | Engine |
-|----|-|-|-|------------------------------------------------------------------------|
+|----|-|-|------------------------------------------------------------------------|
 | q | http://harelba.github.io/q/ | CSV, TSV | Uses SQLite |
 | textql | https://github.com/dinedal/textql | CSV, TSV | Uses SQLite |
 | octoql | https://github.com/cube2222/octosql | JSON, CSV, Excel, Parquet | Custom engine missing many features from SQLite |
