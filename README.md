@@ -58,6 +58,39 @@ Or:
 $ dsq testdata.ndjson "SELECT name, AVG(time) FROM {} GROUP BY name ORDER BY AVG(time) DESC"
 ```
 
+### Pretty print
+
+By default `dsq` prints ugly JSON. This is the most efficient mode.
+
+```bash
+$ dsq testdata/userdata.parquet 'select count(*) from {}'
+[{"count(*)":1000}
+]
+```
+
+If you want prettier JSON you can pipe `dsq` to `jq`.
+
+```bash
+$ dsq testdata/userdata.parquet 'select count(*) from {}' | jq
+[
+  {
+    "count(*)": 1000
+  }
+]
+```
+
+Or you can enable pretty printing with `-p` or `--pretty` in `jsq`
+which will display your results in an ASCII table.
+
+```bash
+$ ./dsq --pretty testdata/userdata.parquet 'select count(*) from {}'
++----------+
+| count(*) |
++----------+
+|     1000 |
++----------+
+```
+
 ### Piping data to dsq
 
 When piping data to `dsq` you need to set the `-s` flag and specify

@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/google/uuid v1.3.0
 	github.com/multiprocessio/datastation/runner v0.0.0-20220121201025-e665cd7ac0fc
+	github.com/olekukonko/tablewriter v0.0.5
 )
 
 require (
@@ -41,6 +42,7 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mattn/go-sqlite3 v1.14.10 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956 // indirect
