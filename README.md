@@ -187,16 +187,12 @@ kinds of SQL queries on arbitrary (structured) data.
 
 ## Comparisons
 
-The speed column is based on rough benchmarks based on [q's
-benchmarks](https://github.com/harelba/q/blob/master/test/BENCHMARK.md). Eventually
-I'll do a more thorough and public benchmark.
-
-| Name | Link | Speed | Supported File Types | Engine |
-|----|-|-|-|------------------------------------------------------------------------|
-| q | http://harelba.github.io/q/ | Fast | CSV, TSV | Uses SQLite |
-| textql | https://github.com/dinedal/textql | Ok | CSV, TSV | Uses SQLite |
-| octoql | https://github.com/cube2222/octosql | Slow | JSON, CSV, Excel, Parquet | Custom engine missing many features from SQLite |
-| dsq | Here | Ok | CSV, TSV, JSON, Newline-delimited JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | Uses SQLite |
+| Name | Link | Supported File Types | Engine |
+|----|-|-|------------------------------------------------------------------------|
+| q | http://harelba.github.io/q/ | CSV, TSV | Uses SQLite |
+| textql | https://github.com/dinedal/textql | CSV, TSV | Uses SQLite |
+| octoql | https://github.com/cube2222/octosql | JSON, CSV, Excel, Parquet | Custom engine missing many features from SQLite |
+| dsq | Here | CSV, TSV, JSON, Newline-delimited JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | Uses SQLite |
 
 ## Community
 
