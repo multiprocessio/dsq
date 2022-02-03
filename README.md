@@ -14,8 +14,7 @@ Binaries for amd64 (x86_64) are provided for each release.
 On macOS or Linux, you can run the following:
 
 ```bash
-$ VERSION=0.1.0
-$ curl -LO "https://github.com/multiprocessio/dsq/releases/download/$VERSION/dsq-$(uname -s | awk '{ print tolower($0) }')-x64-$VERSION.zip"
+$ curl -LO "https://github.com/multiprocessio/dsq/releases/download/0.3.0/dsq-$(uname -s | awk '{ print tolower($0) }')-x64-0.3.0.zip"
 $ unzip dsq*.zip
 $ sudo mv dsq /usr/local/bin/dsq
 ```
