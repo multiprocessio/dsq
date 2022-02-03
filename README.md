@@ -227,6 +227,11 @@ kinds of SQL queries on arbitrary (structured) data.
 | octoql | https://github.com/cube2222/octosql | JSON, CSV, Excel, Parquet | Custom engine |
 | dsq | Here | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | SQLite |
 
+And many other similar tools:
+[sqlite-utils](https://github.com/simonw/sqlite-utils),
+[csvq](https://github.com/mithrandie/csvq),
+[trdsql](https://github.com/noborus/trdsql).
+
 ## Community
 
 [Join us on Discord](https://discord.multiprocess.io).
