@@ -42,14 +42,11 @@ function test() {
 # Join test
 
 joined="$(./dsq testdata/join/users.csv testdata/join/ages.json "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id")"
-expected='[{"age":88,"name":"Ted"}
-,
-{"age":56,"name":"Marjory"}
-,
-{"age":33,"name":"Micah"}
-]'
+expected='[{"age":88,"name":"Ted"},
+{"age":56,"name":"Marjory"},
+{"age":33,"name":"Micah"}]'
 
-test "Join two file-tabless" "$expected" "$joined"
+test "Join two file-tables" "$expected" "$joined"
 
 # Nested values test
 
