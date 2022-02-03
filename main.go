@@ -90,11 +90,12 @@ Examples:
 See the repo for more details: https://github.com/multiprocessio/dsq.`
 
 func main() {
-	log.SetFlags(0)
+	//log.SetFlags(0)
 	runner.Verbose = false
 	var nonFlagArgs []string
 	stdin := false
 	pretty := false
+	log.Println("Started")
 	for _, arg := range os.Args[1:] {
 		if arg == "-v" || arg == "--verbose" {
 			runner.Verbose = true
@@ -201,13 +202,17 @@ func main() {
 		}
 
 		if !readFromStdin {
+			log.Println("Loading file")
 			err := evalFileInto(file, out)
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			log.Println("Done loading")
 		}
 
 		s := getShape(resultFile, file)
+		log.Println("Got shape")
 
 		project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
 			ResultMeta: runner.PanelResult{
@@ -237,11 +242,10 @@ func main() {
 		return
 	}
 
-	connector, tmp, err := runner.MakeTmpSQLiteConnector()
+	connector, err := runner.MakeTmpSQLiteConnector()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.Remove(tmp.Name())
 	project.Connectors = append(project.Connectors, *connector)
 
 	query := lastNonFlagArg
@@ -265,6 +269,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Done eval")
 
 	resultFile := runner.GetPanelResultsFile(project.Id, panel.Id)
 	fd, err := os.Open(resultFile)
@@ -306,8 +311,19 @@ func main() {
 	for _, objRow := range rows {
 		var row []string
 		for _, column := range columns {
-			cell, _ := json.Marshal(objRow[column])
-			row = append(row, string(cell))
+			var cell string
+			switch t := objRow[column].(type) {
+			case bool, byte, complex64, complex128, error, float32, float64,
+				int, int8, int16, int32, int64,
+				uint, uint16, uint32, uint64, uintptr:
+				cell = fmt.Sprintf("%#v", t)
+			case string:
+				cell = t
+			default:
+				cellBytes, _ := json.Marshal(t)
+				cell = string(cellBytes)
+			}
+			row = append(row, cell)
 		}
 		table.Append(row)
 	}
