@@ -223,22 +223,22 @@ kinds of SQL queries on arbitrary (structured) data.
 
 | Name | Link | Supported File Types | Engine |
 |----|-|-|------------------------------------------------------------------------|
-| q | http://harelba.github.io/q/ | CSV, TSV | Uses SQLite |
-| textql | https://github.com/dinedal/textql | CSV, TSV | Uses SQLite |
-| octoql | https://github.com/cube2222/octosql | JSON, CSV, Excel, Parquet | Custom engine missing many features from SQLite |
-| dsq | Here | CSV, TSV, JSON, Newline-delimited JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | Uses SQLite |
+| q | http://harelba.github.io/q/ | CSV, TSV | SQLite |
+| textql | https://github.com/dinedal/textql | CSV, TSV | SQLite |
+| octoql | https://github.com/cube2222/octosql | JSON, CSV, Excel, Parquet | Custom engine |
+| dsq | Here | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | SQLite |
 
 ## Community
 
-[Join us on Discord](https://discord.gg/f2wQBc4bXX).
+[Join us on Discord](https://discord.multiprocess.io).
 
 ## How can I help?
 
 Download the app and use it! Report bugs on
-[Discord](https://discord.gg/f2wQBc4bXX).
+[Discord](https://discord.multiprocess.io).
 
 Before starting on any new feature though, check in on
-[Discord](https://discord.gg/f2wQBc4bXX)!
+[Discord](https://discord.multiprocess.io)!
 
 ## Subscribe
 
