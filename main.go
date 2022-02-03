@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -295,7 +295,6 @@ func main() {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(columns)
 	table.SetAutoFormatHeaders(false)
-
 
 	dec := json.NewDecoder(fd)
 	var rows []map[string]interface{}
