@@ -90,12 +90,11 @@ Examples:
 See the repo for more details: https://github.com/multiprocessio/dsq.`
 
 func main() {
-	//log.SetFlags(0)
+	log.SetFlags(0)
 	runner.Verbose = false
 	var nonFlagArgs []string
 	stdin := false
 	pretty := false
-	log.Println("Started")
 	for _, arg := range os.Args[1:] {
 		if arg == "-v" || arg == "--verbose" {
 			runner.Verbose = true
@@ -202,17 +201,13 @@ func main() {
 		}
 
 		if !readFromStdin {
-			log.Println("Loading file")
 			err := evalFileInto(file, out)
 			if err != nil {
 				log.Fatal(err)
 			}
-
-			log.Println("Done loading")
 		}
 
 		s := getShape(resultFile, file)
-		log.Println("Got shape")
 
 		project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
 			ResultMeta: runner.PanelResult{
@@ -269,7 +264,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Done eval")
 
 	resultFile := runner.GetPanelResultsFile(project.Id, panel.Id)
 	fd, err := os.Open(resultFile)
