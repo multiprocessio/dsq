@@ -58,6 +58,39 @@ Or:
 $ dsq testdata.ndjson "SELECT name, AVG(time) FROM {} GROUP BY name ORDER BY AVG(time) DESC"
 ```
 
+### Pretty print
+
+By default `dsq` prints ugly JSON. This is the most efficient mode.
+
+```bash
+$ dsq testdata/userdata.parquet 'select count(*) from {}'
+[{"count(*)":1000}
+]
+```
+
+If you want prettier JSON you can pipe `dsq` to `jq`.
+
+```bash
+$ dsq testdata/userdata.parquet 'select count(*) from {}' | jq
+[
+  {
+    "count(*)": 1000
+  }
+]
+```
+
+Or you can enable pretty printing with `-p` or `--pretty` in `jsq`
+which will display your results in an ASCII table.
+
+```bash
+$ ./dsq --pretty testdata/userdata.parquet 'select count(*) from {}'
++----------+
+| count(*) |
++----------+
+|     1000 |
++----------+
+```
+
 ### Piping data to dsq
 
 When piping data to `dsq` you need to set the `-s` flag and specify
@@ -165,18 +198,19 @@ Because `location` is not a scalar value. It is an object.
 
 ## Supported Data Types
 
-| Name | File Extension(s) | Notes |
-|-----------|-|---------------------|
-| CSV | `csv` ||
-| TSV | `tsv`, `tab` ||
-| JSON | `json` | Must be an array of objects. |
-| Newline-delimited JSON | `ndjson`, `jsonl` ||
-| Parquet | `parquet` ||
-| Excel | `xlsx`, `xls` | Currently only works if there is only one sheet. |
-| ODS | `ods` | Currently only works if there is only one sheet. |
-| Apache Error Logs | `text/apache2error` | Currently only works if being piped in. |
-| Apache Access Logs | `text/apache2access` | Currently only works if being piped in. |
-| Nginx Access Logs | `text/nginxaccess` | Currently only works if being piped in. |
+| Name | File Extension(s) | Mime Type | Notes |
+|-----------|-|-|--------------------|
+| CSV | `csv` | `text/csv` | |
+| TSV | `tsv`, `tab` | `text/tab-separated-values` | |
+| JSON | `json` | `application/json` |  Must be an array of objects. |
+| Newline-delimited JSON | `ndjson`, `jsonl` | `application/jsonlines` | |
+| Concatenated JSON | `cjson` | `application/jsonconcat` ||
+| Parquet | `parquet` | `parquet` ||
+| Excel | `xlsx`, `xls` | `application/vnd.ms-excel` | Currently only works if there is only one sheet. |
+| ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` |  Currently only works if there is only one sheet. |
+| Apache Error Logs | NA | `text/apache2error` | Currently only works if being piped in. |
+| Apache Access Logs | NA | `text/apache2access` | Currently only works if being piped in. |
+| Nginx Access Logs | NA | `text/nginxaccess` | Currently only works if being piped in. |
 
 ## Engine
 
@@ -189,22 +223,22 @@ kinds of SQL queries on arbitrary (structured) data.
 
 | Name | Link | Supported File Types | Engine |
 |----|-|-|------------------------------------------------------------------------|
-| q | http://harelba.github.io/q/ | CSV, TSV | Uses SQLite |
-| textql | https://github.com/dinedal/textql | CSV, TSV | Uses SQLite |
-| octoql | https://github.com/cube2222/octosql | JSON, CSV, Excel, Parquet | Custom engine missing many features from SQLite |
-| dsq | Here | CSV, TSV, JSON, Newline-delimited JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | Uses SQLite |
+| q | http://harelba.github.io/q/ | CSV, TSV | SQLite |
+| textql | https://github.com/dinedal/textql | CSV, TSV | SQLite |
+| octoql | https://github.com/cube2222/octosql | JSON, CSV, Excel, Parquet | Custom engine |
+| dsq | Here | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | SQLite |
 
 ## Community
 
-[Join us on Discord](https://discord.gg/f2wQBc4bXX).
+[Join us on Discord](https://discord.multiprocess.io).
 
 ## How can I help?
 
 Download the app and use it! Report bugs on
-[Discord](https://discord.gg/f2wQBc4bXX).
+[Discord](https://discord.multiprocess.io).
 
 Before starting on any new feature though, check in on
-[Discord](https://discord.gg/f2wQBc4bXX)!
+[Discord](https://discord.multiprocess.io)!
 
 ## Subscribe
 

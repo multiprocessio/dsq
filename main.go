@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,6 +14,7 @@ import (
 	"github.com/multiprocessio/datastation/runner"
 
 	"github.com/google/uuid"
+	"github.com/olekukonko/tablewriter"
 )
 
 func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
@@ -92,6 +94,7 @@ func main() {
 	runner.Verbose = false
 	var nonFlagArgs []string
 	stdin := false
+	pretty := false
 	for _, arg := range os.Args[1:] {
 		if arg == "-v" || arg == "--verbose" {
 			runner.Verbose = true
@@ -106,6 +109,11 @@ func main() {
 		if arg == "-h" || arg == "--help" {
 			log.Println(HELP)
 			return
+		}
+
+		if arg == "-p" || arg == "--pretty" {
+			pretty = true
+			continue
 		}
 
 		nonFlagArgs = append(nonFlagArgs, arg)
@@ -258,15 +266,51 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Dump the result to stdout
-	fd, err := os.Open(runner.GetPanelResultsFile(project.Id, panel.Id))
+	resultFile := runner.GetPanelResultsFile(project.Id, panel.Id)
+	fd, err := os.Open(resultFile)
 	if err != nil {
 		log.Fatalf("Could not open results file: %s", err)
 	}
 
-	_, err = io.Copy(os.Stdout, fd)
+	if !pretty {
+		// Dump the result to stdout
+		_, err = io.Copy(os.Stdout, fd)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println()
+		return
+	}
+
+	s, err := runner.ShapeFromFile(resultFile, "results", 10_000, 100)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println()
+
+	var columns []string
+	for name := range s.ArrayShape.Children.ObjectShape.Children {
+		columns = append(columns, name)
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(columns)
+	table.SetAutoFormatHeaders(false)
+
+	dec := json.NewDecoder(fd)
+	var rows []map[string]interface{}
+	err = dec.Decode(&rows)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, objRow := range rows {
+		var row []string
+		for _, column := range columns {
+			cell, _ := json.Marshal(objRow[column])
+			row = append(row, string(cell))
+		}
+		table.Append(row)
+	}
+
+	table.Render()
 }
