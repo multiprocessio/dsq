@@ -51,12 +51,9 @@ test "Join two file-tables" "$expected" "$joined"
 # Nested values test
 
 got=`./dsq ./testdata/nested/nested.json 'select name, "location.city" city, "location.address.number" address_number from {}'`
-expected='[{"address_number":1002,"city":"Toronto","name":"Agarrah"}
-,
-{"address_number":19,"city":"Mexico City","name":"Minoara"}
-,
-{"address_number":12,"city":"New London","name":"Fontoon"}
-]'
+expected='[{"address_number":1002,"city":"Toronto","name":"Agarrah"},
+{"address_number":19,"city":"Mexico City","name":"Minoara"},
+{"address_number":12,"city":"New London","name":"Fontoon"}]'
 
 test "Extract nested values" "$expected" "$got"
 
