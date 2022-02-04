@@ -237,11 +237,10 @@ func main() {
 		return
 	}
 
-	connector, tmp, err := runner.MakeTmpSQLiteConnector()
+	connector, err := runner.MakeTmpSQLiteConnector()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer os.Remove(tmp.Name())
 	project.Connectors = append(project.Connectors, *connector)
 
 	query := lastNonFlagArg
@@ -306,8 +305,19 @@ func main() {
 	for _, objRow := range rows {
 		var row []string
 		for _, column := range columns {
-			cell, _ := json.Marshal(objRow[column])
-			row = append(row, string(cell))
+			var cell string
+			switch t := objRow[column].(type) {
+			case bool, byte, complex64, complex128, error, float32, float64,
+				int, int8, int16, int32, int64,
+				uint, uint16, uint32, uint64, uintptr:
+				cell = fmt.Sprintf("%#v", t)
+			case string:
+				cell = t
+			default:
+				cellBytes, _ := json.Marshal(t)
+				cell = string(cellBytes)
+			}
+			row = append(row, cell)
 		}
 		table.Append(row)
 	}

@@ -42,24 +42,18 @@ function test() {
 # Join test
 
 joined="$(./dsq testdata/join/users.csv testdata/join/ages.json "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id")"
-expected='[{"age":88,"name":"Ted"}
-,
-{"age":56,"name":"Marjory"}
-,
-{"age":33,"name":"Micah"}
-]'
+expected='[{"age":88,"name":"Ted"},
+{"age":56,"name":"Marjory"},
+{"age":33,"name":"Micah"}]'
 
-test "Join two file-tabless" "$expected" "$joined"
+test "Join two file-tables" "$expected" "$joined"
 
 # Nested values test
 
 got=`./dsq ./testdata/nested/nested.json 'select name, "location.city" city, "location.address.number" address_number from {}'`
-expected='[{"address_number":1002,"city":"Toronto","name":"Agarrah"}
-,
-{"address_number":19,"city":"Mexico City","name":"Minoara"}
-,
-{"address_number":12,"city":"New London","name":"Fontoon"}
-]'
+expected='[{"address_number":1002,"city":"Toronto","name":"Agarrah"},
+{"address_number":19,"city":"Mexico City","name":"Minoara"},
+{"address_number":12,"city":"New London","name":"Fontoon"}]'
 
 test "Extract nested values" "$expected" "$got"
 
