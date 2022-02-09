@@ -78,7 +78,7 @@ $ dsq testdata/userdata.parquet 'select count(*) from {}' | jq
 ]
 ```
 
-Or you can enable pretty printing with `-p` or `--pretty` in `jsq`
+Or you can enable pretty printing with `-p` or `--pretty` in `dsq`
 which will display your results in an ASCII table.
 
 ```bash
