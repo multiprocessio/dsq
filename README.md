@@ -120,7 +120,21 @@ JSON).
 
 ```bash
 $ dsq testdata/join/users.csv testdata/join/ages.json \
-      "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"
+  "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"
+[{"age":88,"name":"Ted"},
+{"age":56,"name":"Marjory"},
+{"age":33,"name":"Micah"}]
+```
+
+You can also give file-table-names aliases since `dsq` uses standard
+SQL:
+
+```bash
+$ dsq testdata/join/users.csv testdata/join/ages.json \
+  "select u.name, a.age from {0} u join {1} a on u.id = a.id"
+[{"age":88,"name":"Ted"},
+{"age":56,"name":"Marjory"},
+{"age":33,"name":"Micah"}]
 ```
 
 ### Transforming data to JSON without querying
