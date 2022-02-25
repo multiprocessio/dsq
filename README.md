@@ -174,6 +174,17 @@ And if you need to disambiguate the table:
 $ dsq user_addresses.json 'SELECT name, {}."location.city" FROM {}'
 ```
 
+#### Caveat: PowerShell
+
+On PowerShell you must escape inner double quotes with backslashes:
+
+```powershell
+> dsq .\testdata\nested\nested.json 'select name, \"location.city\" from {}'
+[{"location.city":"Toronto","name":"Agarrah"},
+{"location.city":"Mexico City","name":"Minoara"},
+{"location.city":"New London","name":"Fontoon"}]
+```
+
 #### Nested objects explained
 
 Nested objects are collapsed and their new column name becomes the
