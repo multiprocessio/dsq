@@ -95,7 +95,6 @@ func main() {
 	var nonFlagArgs []string
 	stdin := false
 	pretty := false
-	justSchema := false
 	for _, arg := range os.Args[1:] {
 		if arg == "-v" || arg == "--verbose" {
 			runner.Verbose = true
@@ -114,11 +113,6 @@ func main() {
 
 		if arg == "-p" || arg == "--pretty" {
 			pretty = true
-			continue
-		}
-
-		if arg == "-c" || arg == "--schema" {
-			justSchema = true
 			continue
 		}
 
@@ -266,7 +260,8 @@ func main() {
 		},
 	}
 
-	err = runner.EvalDatabasePanel(project, 0, panel, nil)
+	ec := runner.EvalContext{}
+	err = ec.EvalDatabasePanel(project, 0, panel, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
