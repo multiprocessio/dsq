@@ -45,6 +45,12 @@ jobs:
     - run: ./scripts/test.sh
       shell: bash
 
+    # Subtle behavioral differences between powershell/cmd and bash. For example nested double quotes must be escaped.
+    - run: ./scripts/test.sh --shell=powershell
+      shell: powershell
+    - run: ./scripts/test.sh --shell=cmd
+      shell: cmd
+
   dsq-tests-macos:
     runs-on: macos-latest
 
