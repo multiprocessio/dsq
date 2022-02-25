@@ -174,9 +174,9 @@ And if you need to disambiguate the table:
 $ dsq user_addresses.json 'SELECT name, {}."location.city" FROM {}'
 ```
 
-#### Caveat: PowerShell
+#### Caveat: PowerShell, CMD.exe
 
-On PowerShell you must escape inner double quotes with backslashes:
+On PowerShell and CMD.exe you must escape inner double quotes with backslashes:
 
 ```powershell
 > dsq .\testdata\nested\nested.json 'select name, \"location.city\" from {}'
