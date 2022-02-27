@@ -184,7 +184,7 @@ $ dsq user_addresses.json 'SELECT name, {}."location.city" FROM {}'
 On PowerShell and CMD.exe you must escape inner double quotes with backslashes:
 
 ```powershell
-> dsq .\testdata\nested\nested.json 'select name, \"location.city\" from {}'
+> dsq user_addresses.json 'select name, \"location.city\" from {}'
 [{"location.city":"Toronto","name":"Agarrah"},
 {"location.city":"Mexico City","name":"Minoara"},
 {"location.city":"New London","name":"Fontoon"}]
@@ -224,6 +224,19 @@ $ dsq user_addresses.json 'SELECT name, {}."location" FROM {}'
 ```
 
 Because `location` is not a scalar value. It is an object.
+
+### REGEXP
+
+Since DataStation and `dsq` are built on SQLite, you can filter using
+`x REGEXP 'y'` where `x` is some column or value and `y` is a REGEXP
+string. SQLite doesn't pick a regexp implementation. DataStation and
+`dsq` use Go's regexp implementation which is more limited than PCRE2
+because Go support for PCRE2 is not yet very mature.
+
+```sql
+$ dsq user_addresses.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
+[{"location.address.number":1002,"location.city":"Toronto","name":"Agarrah"}]
+```
 
 ## Supported Data Types
 
