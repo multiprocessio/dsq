@@ -19,7 +19,7 @@ import (
 )
 
 func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
-	if strings.Contains(fileExtensionOrContentType, os.Separator) {
+	if strings.Contains(fileExtensionOrContentType, string(filepath.Separator)) {
 		return runner.MimeType(fileExtensionOrContentType)
 	}
 
@@ -177,7 +177,7 @@ func _main() error {
 					return errors.New("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
 				}
 				mimetype := files[i+1]
-				if !strings.Contains(mimetype, os.Separator) {
+				if !strings.Contains(mimetype, string(filepath.Separator)) {
 					mimetype = string(runner.GetMimeType("x."+mimetype, runner.ContentTypeInfo{}))
 				}
 
