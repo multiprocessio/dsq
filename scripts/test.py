@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import subprocess
 import sys
 
@@ -30,7 +31,7 @@ def test(name, to_run, want, s=SHELL, fail=False):
     tests += 1
     skipped = True
 
-    if SHELL != 'bash':
+    if os.name == 'nt':
         to_run = to_run.replace('./dsq', './dsq.exe')
 
     try:
