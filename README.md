@@ -184,7 +184,7 @@ $ dsq user_addresses.json 'SELECT name, {}."location.city" FROM {}'
 On PowerShell and CMD.exe you must escape inner double quotes with backslashes:
 
 ```powershell
-> dsq .\testdata\nested\nested.json 'select name, \"location.city\" from {}'
+> dsq user_addresses.json 'select name, \"location.city\" from {}'
 [{"location.city":"Toronto","name":"Agarrah"},
 {"location.city":"Mexico City","name":"Minoara"},
 {"location.city":"New London","name":"Fontoon"}]
@@ -234,7 +234,7 @@ implementation which is more limited than PCRE2 because Go support for
 PCRE2 is not yet very mature.
 
 ```sql
-$ dsq ./testdata/nested/nested.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
+$ dsq user_addresses.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
 [{"location.address.number":1002,"location.city":"Toronto","name":"Agarrah"}]
 ```
 
