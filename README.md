@@ -227,11 +227,11 @@ Because `location` is not a scalar value. It is an object.
 
 ### REGEXP
 
-SQLite allows you to filter using `x REGEXP 'y'` where `x` is some
-column or value and `y` is a REGEXP string. SQLite doesn't pick a
-regexp implementation. DataStation and `dsq` use Go's regexp
-implementation which is more limited than PCRE2 because Go support for
-PCRE2 is not yet very mature.
+Since DataStation and `dsq` are built on SQLite, you can filter using
+`x REGEXP 'y'` where `x` is some column or value and `y` is a REGEXP
+string. SQLite doesn't pick a regexp implementation. DataStation and
+`dsq` use Go's regexp implementation which is more limited than PCRE2
+because Go support for PCRE2 is not yet very mature.
 
 ```sql
 $ dsq user_addresses.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
