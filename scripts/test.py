@@ -12,6 +12,8 @@ def cmd(to_run):
     if WIN:
         for i, piece in enumerate(pieces):
             pieces[i] = piece.replace('./dsq', './dsq.exe').replace('/', '\\')
+    elif '|' in pieces:
+        pieces = ['bash', '-c', to_run]
 
     return subprocess.check_output(pieces, stderr=subprocess.STDOUT, cwd=os.getcwd())
 
@@ -30,7 +32,7 @@ def test(name, to_run, want, fail=False):
         got = cmd(to_run).decode()
     except Exception as e:
         if not fail:
-            print(f'  FAILURE: unexpected failure: ' + e.output.decode())
+            print(f'  FAILURE: unexpected failure: ' + (e.output.decode() if isinstance(e, bytes) else str(e)))
             failures += 1
             print()
             return
@@ -94,6 +96,6 @@ test("Does not allow querying on non-array data", to_run, want, fail=True)
 
 # END OF TESTS
 
-print(f"\n{tests - failures} of {tests} succeeded.\n")
+print(f"{tests - failures} of {tests} succeeded.")
 if failures > 0:
     sys.exit(1)
