@@ -7,67 +7,54 @@ import sys
 
 WIN = os.name == 'nt'
 
-SHELL = 'system'
-for i, a in enumerate(sys.argv):
-    if a == '--shell':
-        SHELL = sys.argv[i+1]
+def cmd(to_run):
+    pieces = shlex.split(to_run)
+    if WIN:
+        for i, piece in enumerate(pieces):
+            pieces[i] = piece.replace('./dsq', './dsq.exe').replace('/', '\\')
 
-
-def cmd(to_run, s=SHELL):
-    if s == 'system':
-        return subprocess.check_output(shlex.split(to_run), stderr=subprocess.STDOUT)
-    elif s == 'bash':
-        return subprocess.check_output(['bash', '-c', to_run], stderr=subprocess.STDOUT)
-    elif s == 'powershell':
-        return subprocess.check_output(['powershell', '-Command', to_run], stderr=subprocess.STDOUT)
-    elif s == 'cmd':
-        return subprocess.check_output(['cmd.exe', '/C', to_run], stderr=subprocess.STDOUT)
-
-    print('Unknown shell: ' + s)
-    sys.exit(1)
-
+    return subprocess.check_output(pieces, stderr=subprocess.STDOUT, cwd=os.getcwd())
 
 tests = 0
 failures = 0
 
-def test(name, to_run, want, s=SHELL, fail=False):
+def test(name, to_run, want, fail=False):
     global tests
     global failures
     tests += 1
     skipped = True
 
-    if WIN:
-        to_run = to_run.replace('./dsq', './dsq.exe').replace('/', '\\')
+    print('STARTING: ' + name)
 
-        # Bash and powershell require nested quotes to be escaped
-        to_run = to_run.replace('"', '\\"')
-
-    print(to_run)
     try:
-        got = cmd(to_run, s).decode()
+        got = cmd(to_run).decode()
     except Exception as e:
         if not fail:
-            print(f'[FAILURE] ' + name + ', unexpected failure')
-            print(e)
+            print(f'  FAILURE: unexpected failure: ' + e.output.decode())
             failures += 1
+            print()
             return
         else:
             got = e.output.decode()
             skipped = False
     if fail and skipped:
-        print(f'[FAILURE] ' + name + ', unexpected success')
+        print(f'  FAILURE: unexpected success')
         failures += 1
+        print()
         return
+    if WIN and '/' in want:
+        want = want.replace('/', '\\')
     if want.strip() != got.strip():
-        print(f'[FAILURE] ' + name)
+        print(f'  FAILURE')
         try:
-            print(cmd(f'diff <(echo "{want.strip()}") <(echo "{got.strip()}") || true', 'bash').decode())
+            print(cmd(f'diff <(echo "{want.strip()}") <(echo "{got.strip()}") || true').decode())
         except Exception as e:
             print(e)
         failures += 1
+        print()
         return
 
-    print(f'[SUCCESS] ' + name)
+    print(f'  SUCCESS\n')
 
 
 types = ['csv', 'tsv', 'parquet', 'json', 'jsonl', 'xlsx', 'ods']
@@ -75,10 +62,16 @@ for t in types:
     if WIN:
         continue
     to_run = f"cat ./testdata/userdata.{t} | ./dsq -s {t} 'SELECT COUNT(1) AS c FROM {{}}' | jq '.[0].c'"
-    test('SQL count for ' + t + ' pipe in bash', to_run, '1000', 'bash')
+    test('SQL count for ' + t + ' pipe', to_run, '1000')
 
     to_run = f"./dsq ./testdata/userdata.{t} 'SELECT COUNT(1) AS c FROM {{}}' | jq '.[0].c'"
-    test('SQL count for ' + t + ' file in bash', to_run, '1000', 'bash')
+    test('SQL count for ' + t + ' file', to_run, '1000')
+
+
+# No input test
+to_run = "./dsq"
+want = "No input files."
+test("Handles no arguments correctly", to_run, want, fail=True)
 
 # Join test
 to_run = "./dsq testdata/join/users.csv testdata/join/ages.json 'select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id'"
@@ -93,11 +86,6 @@ want = """[{"address_number":1002,"city":"Toronto","name":"Agarrah"},
 {"address_number":19,"city":"Mexico City","name":"Minoara"},
 {"address_number":12,"city":"New London","name":"Fontoon"}]"""
 test("Extract nested values", to_run, want)
-
-# No input test
-to_run = "./dsq"
-want = "No input files."
-test("Handles no arguments correctly", to_run, want, fail=True)
 
 # Not an array of data test
 to_run = "./dsq ./testdata/bad/not_an_array.json"
