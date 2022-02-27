@@ -44,7 +44,7 @@ def test(name, to_run, want, s=SHELL, fail=False):
     except Exception as e:
         if not fail:
             print(f'[FAILURE] ' + name + ', unexpected failure')
-            print(e)
+            print(e, e.output.decode())
             failures += 1
             return
         else:
@@ -56,7 +56,10 @@ def test(name, to_run, want, s=SHELL, fail=False):
         return
     if want.strip() != got.strip():
         print(f'[FAILURE] ' + name)
-        print(cmd(f'diff <(echo "{want.strip()}") <(echo "{got.strip()}") || true', 'bash').decode())
+        try:
+            print(cmd(f'diff <(echo "{want.strip()}") <(echo "{got.strip()}") || true', 'bash').decode())
+        except Exception as e:
+            print(e)
         failures += 1
         return
 
