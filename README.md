@@ -40,7 +40,8 @@ $ go install github.com/multiprocessio/dsq@latest
 
 ## Usage
 
-You can either pipe data to `dsq` or you can pass a file name to it.
+You can either pipe data to `dsq` or you can pass a file name to
+it. NOTE: piping data doesn't work on Windows.
 
 If you are passing a file, it must have the usual extension for its
 content type.
