@@ -4,15 +4,16 @@ import os
 import shlex
 import subprocess
 import sys
+import tempfile
 
 WIN = os.name == 'nt'
 
-def cmd(to_run):
+def cmd(to_run, bash=False):
     pieces = shlex.split(to_run)
     if WIN:
         for i, piece in enumerate(pieces):
             pieces[i] = piece.replace('./dsq', './dsq.exe').replace('/', '\\')
-    elif '|' in pieces:
+    elif bash or '|' in pieces:
         pieces = ['bash', '-c', to_run]
 
     return subprocess.check_output(pieces, stderr=subprocess.STDOUT, cwd=os.getcwd())
@@ -49,9 +50,15 @@ def test(name, to_run, want, fail=False):
     if want.strip() != got.strip():
         print(f'  FAILURE')
         try:
-            print(cmd(f'diff <(echo "{want.strip()}") <(echo "{got.strip()}") || true').decode())
+            with tempfile.NamedTemporaryFile() as want_fp:
+                want_fp.write(want.strip().encode())
+                want_fp.flush()
+                with tempfile.NamedTemporaryFile() as got_fp:
+                    got_fp.write(got.strip().encode())
+                    got_fp.flush()
+                    print(cmd(f'diff {want_fp.name} {got_fp.name} || true', bash=True).decode())
         except Exception as e:
-            print(e)
+            print(e.cmd, e.output.decode())
         failures += 1
         print()
         return
@@ -93,6 +100,16 @@ test("Extract nested values", to_run, want)
 to_run = "./dsq ./testdata/bad/not_an_array.json"
 want = "Input is not an array of objects: ./testdata/bad/not_an_array.json."
 test("Does not allow querying on non-array data", to_run, want, fail=True)
+
+# REGEXP support
+to_run = """./dsq ./testdata/nested/nested.json "SELECT * FROM {} WHERE name REGEXP 'A.*'" """
+want = '[{"location.address.number":1002,"location.city":"Toronto","name":"Agarrah"}]'
+test("Supports filtering with REGEXP", to_run, want)
+
+# Table aliases
+to_run = """./dsq ./testdata/nested/nested.json "SELECT * FROM {} u WHERE u.name REGEXP 'A.*'" """
+want = '[{"location.address.number":1002,"location.city":"Toronto","name":"Agarrah"}]'
+test("Supports table aliases", to_run, want)
 
 # END OF TESTS
 
