@@ -29,7 +29,7 @@ jobs:
 
     - run: ./scripts/ci/prepare_linux.sh
     - run: go build
-    - run: ./scripts/test.sh
+    - run: ./scripts/test.py
 
   dsq-tests-windows:
     runs-on: windows-latest
@@ -42,13 +42,13 @@ jobs:
     - run: ./scripts/ci/prepare_windows.ps1
       shell: pwsh
     - run: go build
-    - run: ./scripts/test.sh
+    - run: ./scripts/test.py
       shell: bash
 
     # Subtle behavioral differences between powershell/cmd and bash. For example nested double quotes must be escaped.
-    - run: ./scripts/test.sh --shell=powershell
+    - run: ./scripts/test.py --shell powershell
       shell: powershell
-    - run: ./scripts/test.sh --shell=cmd
+    - run: ./scripts/test.py --shell cmd
       shell: cmd
 
   dsq-tests-macos:
@@ -61,4 +61,4 @@ jobs:
 
     - run: ./scripts/ci/prepare_macos.sh
     - run: go build
-    - run: ./scripts/test.sh
+    - run: ./scripts/test.py
