@@ -4,6 +4,8 @@ import os
 import subprocess
 import sys
 
+WIN = os.name == 'nt'
+
 SHELL = 'bash'
 for i, a in enumerate(sys.argv):
     if a == '--shell':
@@ -31,8 +33,11 @@ def test(name, to_run, want, s=SHELL, fail=False):
     tests += 1
     skipped = True
 
-    if os.name == 'nt':
-        to_run = to_run.replace('./dsq', './dsq.exe')
+    if WIN:
+        to_run = to_run.replace('./dsq', './dsq.exe').replace('/', '\\')
+    if s != 'bash':
+        # Bash and powershell require nested quotes to be escaped
+        to_run = to_run.replace('"', '\\"')
 
     try:
         got = cmd(to_run, s).decode()
@@ -41,6 +46,7 @@ def test(name, to_run, want, s=SHELL, fail=False):
             print(f'[FAILURE] ' + name + ', unexpected failure')
             print(e)
             failures += 1
+            return
         else:
             got = e.output.decode()
             skipped = False
@@ -59,6 +65,8 @@ def test(name, to_run, want, s=SHELL, fail=False):
 
 types = ['csv', 'tsv', 'parquet', 'json', 'jsonl', 'xlsx', 'ods']
 for t in types:
+    if WIN:
+        continue
     to_run = f"cat ./testdata/userdata.{t} | ./dsq -s {t} 'SELECT COUNT(1) AS c FROM {{}}' | jq '.[0].c'"
     test('SQL count for ' + t + ' pipe in bash', to_run, '1000', 'bash')
 
@@ -66,7 +74,7 @@ for t in types:
     test('SQL count for ' + t + ' file in bash', to_run, '1000', 'bash')
 
 # Join test
-to_run = './dsq testdata/join/users.csv testdata/join/ages.json "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"'
+to_run = "./dsq testdata/join/users.csv testdata/join/ages.json 'select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id'"
 want = """[{"age":88,"name":"Ted"},
 {"age":56,"name":"Marjory"},
 {"age":33,"name":"Micah"}]"""
