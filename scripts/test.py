@@ -38,8 +38,7 @@ def test(name, to_run, want, s=SHELL, fail=False):
 
     if WIN:
         to_run = to_run.replace('./dsq', './dsq.exe').replace('/', '\\')
-    if 'BASH' not in os.environ and 'ZSH' not in os.environ:
-        print(os.environ)
+
         # Bash and powershell require nested quotes to be escaped
         to_run = to_run.replace('"', '\\"')
 
