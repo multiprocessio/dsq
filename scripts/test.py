@@ -3,13 +3,13 @@
 import subprocess
 import sys
 
-shell = 'bash'
+SHELL = 'bash'
 for i, a in enumerate(sys.argv):
     if a == '--shell':
-        shell = sys.argv[i+1]
+        SHELL = sys.argv[i+1]
 
 
-def cmd(to_run, s=shell):
+def cmd(to_run, s=SHELL):
     if s == 'bash':
         return subprocess.check_output(['bash', '-c', to_run], stderr=subprocess.STDOUT)
     elif s == 'powershell':
@@ -24,11 +24,15 @@ def cmd(to_run, s=shell):
 tests = 0
 failures = 0
 
-def test(name, to_run, want, s=shell, fail=False):
+def test(name, to_run, want, s=SHELL, fail=False):
     global tests
     global failures
     tests += 1
     skipped = True
+
+    if SHELL != 'bash':
+        to_run = to_run.replace('./dsq', './dsq.exe')
+
     try:
         got = cmd(to_run, s).decode()
     except Exception as e:
