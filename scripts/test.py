@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 
 import os
+import shlex
 import subprocess
 import sys
 
 WIN = os.name == 'nt'
 
-SHELL = 'bash'
+SHELL = 'system'
 for i, a in enumerate(sys.argv):
     if a == '--shell':
         SHELL = sys.argv[i+1]
 
 
 def cmd(to_run, s=SHELL):
-    if s == 'bash':
+    if s == 'system':
+        return subprocess.check_output(shlex.split(to_run), stderr=subprocess.STDOUT)
+    elif s == 'bash':
         return subprocess.check_output(['bash', '-c', to_run], stderr=subprocess.STDOUT)
     elif s == 'powershell':
         return subprocess.check_output(['powershell', '-Command', to_run], stderr=subprocess.STDOUT)
@@ -35,7 +38,7 @@ def test(name, to_run, want, s=SHELL, fail=False):
 
     if WIN:
         to_run = to_run.replace('./dsq', './dsq.exe').replace('/', '\\')
-    if s != 'bash':
+    if s in ['cmd', 'powershell']:
         # Bash and powershell require nested quotes to be escaped
         to_run = to_run.replace('"', '\\"')
 
@@ -44,7 +47,7 @@ def test(name, to_run, want, s=SHELL, fail=False):
     except Exception as e:
         if not fail:
             print(f'[FAILURE] ' + name + ', unexpected failure')
-            print(e, e.output.decode())
+            print(e)
             failures += 1
             return
         else:
