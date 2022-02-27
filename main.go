@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -89,7 +89,6 @@ Examples:
           "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"
 
 See the repo for more details: https://github.com/multiprocessio/dsq.`
-
 
 func _main() error {
 	log.SetFlags(0)
