@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -44,10 +45,10 @@ func evalFileInto(file string, out *os.File) error {
 	return runner.TransformFile(file, runner.ContentTypeInfo{}, out)
 }
 
-func getShape(resultFile, panelId string) *runner.Shape {
+func getShape(resultFile, panelId string) (*runner.Shape, error) {
 	s, err := runner.ShapeFromFile(resultFile, panelId, 10_000, 100)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	if !runner.ShapeIsObjectArray(*s) {
@@ -55,10 +56,10 @@ func getShape(resultFile, panelId string) *runner.Shape {
 		if panelId != "" {
 			rest = ": " + panelId + "."
 		}
-		log.Fatalf("Input is not an array of objects%s", rest)
+		return nil, fmt.Errorf("Input is not an array of objects%s", rest)
 	}
 
-	return s
+	return s, nil
 }
 
 var Version = "latest"
@@ -89,7 +90,8 @@ Examples:
 
 See the repo for more details: https://github.com/multiprocessio/dsq.`
 
-func main() {
+
+func _main() error {
 	log.SetFlags(0)
 	runner.Verbose = false
 	var nonFlagArgs []string
@@ -108,7 +110,7 @@ func main() {
 
 		if arg == "-h" || arg == "--help" {
 			log.Println(HELP)
-			return
+			return nil
 		}
 
 		if arg == "-p" || arg == "--pretty" {
@@ -135,12 +137,12 @@ func main() {
 	}
 
 	if len(files) == 0 {
-		log.Fatal("No input files.")
+		return errors.New("No input files.")
 	}
 
 	projectTmp, err := ioutil.TempFile("", "dsq-project")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer os.Remove(projectTmp.Name())
 	project := &runner.ProjectState{
@@ -152,13 +154,20 @@ func main() {
 		},
 	}
 
+	tmpDir, err := os.MkdirTemp("", "dsq")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	ec := runner.NewEvalContext(*runner.DefaultSettings, tmpDir)
 	for i := 0; i < len(files); i++ {
 		file := files[i]
 		panelId := uuid.New().String()
-		resultFile := runner.GetPanelResultsFile(project.Id, panelId)
+		resultFile := ec.GetPanelResultsFile(project.Id, panelId)
 		out, err := openTruncate(resultFile)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		readFromStdin := false
@@ -166,7 +175,7 @@ func main() {
 			b, err := ioutil.ReadAll(os.Stdin)
 			if err == nil {
 				if i == len(files)-1 {
-					log.Fatal("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
+					return errors.New("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
 				}
 				mimetype := files[i+1]
 				if !strings.Contains(mimetype, "/") {
@@ -174,17 +183,20 @@ func main() {
 				}
 
 				if mimetype == "" {
-					log.Fatalf("Unknown mimetype or file extension: %s.", mimetype)
+					return fmt.Errorf("Unknown mimetype or file extension: %s.", mimetype)
 				}
 				i += 1
 
 				cti := runner.ContentTypeInfo{Type: string(mimetype)}
 				err := runner.TransformReader(bytes.NewReader(b), "", cti, out)
 				if err != nil {
-					log.Fatal(err)
+					return err
 				}
 
-				s := getShape(resultFile, "")
+				s, err := getShape(resultFile, "")
+				if err != nil {
+					return err
+				}
 
 				project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
 					ResultMeta: runner.PanelResult{
@@ -203,11 +215,14 @@ func main() {
 		if !readFromStdin {
 			err := evalFileInto(file, out)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 		}
 
-		s := getShape(resultFile, file)
+		s, err := getShape(resultFile, file)
+		if err != nil {
+			return err
+		}
 
 		project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
 			ResultMeta: runner.PanelResult{
@@ -222,24 +237,24 @@ func main() {
 
 	// No query, just dump transformed file directly out
 	if lastNonFlagArg == "" {
-		resultFile := runner.GetPanelResultsFile(project.Id, project.Pages[0].Panels[0].Id)
+		resultFile := ec.GetPanelResultsFile(project.Id, project.Pages[0].Panels[0].Id)
 		fd, err := os.Open(resultFile)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		defer fd.Close()
 
 		_, err = io.Copy(os.Stdout, fd)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
-		return
+		return nil
 	}
 
 	connector, err := runner.MakeTmpSQLiteConnector()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	project.Connectors = append(project.Connectors, *connector)
 
@@ -260,31 +275,30 @@ func main() {
 		},
 	}
 
-	ec := runner.EvalContext{}
 	err = ec.EvalDatabasePanel(project, 0, panel, nil)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	resultFile := runner.GetPanelResultsFile(project.Id, panel.Id)
+	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
 	fd, err := os.Open(resultFile)
 	if err != nil {
-		log.Fatalf("Could not open results file: %s", err)
+		return fmt.Errorf("Could not open results file: %s", err)
 	}
 
 	if !pretty {
 		// Dump the result to stdout
 		_, err = io.Copy(os.Stdout, fd)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		fmt.Println()
-		return
+		return nil
 	}
 
 	s, err := runner.ShapeFromFile(resultFile, "results", 10_000, 100)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	var columns []string
@@ -300,7 +314,7 @@ func main() {
 	var rows []map[string]interface{}
 	err = dec.Decode(&rows)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for _, objRow := range rows {
@@ -324,4 +338,12 @@ func main() {
 	}
 
 	table.Render()
+	return nil
+}
+
+func main() {
+	err := _main()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
