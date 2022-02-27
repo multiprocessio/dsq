@@ -9,9 +9,9 @@ version of this, check out DataStation.
 
 Binaries for amd64 (x86_64) are provided for each release.
 
-### macOS, Linux
+### macOS, Linux, WSL
 
-On macOS or Linux, you can run the following:
+On macOS, Linux, and WSL you can run the following:
 
 ```bash
 $ curl -LO "https://github.com/multiprocessio/dsq/releases/download/0.4.0/dsq-$(uname -s | awk '{ print tolower($0) }')-x64-0.4.0.zip"
@@ -23,13 +23,13 @@ Or install manually from the [releases
 page](https://github.com/multiprocessio/dsq/releases), unzip and add
 `dsq` to your `$PATH`.
 
-### Windows
+### Windows, not WSL
 
 Download the [latest Windows
 release](https://github.com/multiprocessio/dsq/releases), unzip it,
 and add `dsq` to your `$PATH`.
 
-### Manual
+### Manual, and other Go platforms
 
 If you are on another platform or architecture or want to grab the
 latest release, you can do so with Go 1.17+:
@@ -38,9 +38,14 @@ latest release, you can do so with Go 1.17+:
 $ go install github.com/multiprocessio/dsq@latest
 ```
 
+`dsq` will likely work on other platforms that Go is ported to such as
+AARCH64 and OpenBSD, but tests and builds are only run against x86_64
+Windows/Linux/macOS.
+
 ## Usage
 
-You can either pipe data to `dsq` or you can pass a file name to it.
+You can either pipe data to `dsq` or you can pass a file name to
+it. NOTE: piping data doesn't work on Windows.
 
 If you are passing a file, it must have the usual extension for its
 content type.
@@ -172,6 +177,17 @@ And if you need to disambiguate the table:
 
 ```sql
 $ dsq user_addresses.json 'SELECT name, {}."location.city" FROM {}'
+```
+
+#### Caveat: PowerShell, CMD.exe
+
+On PowerShell and CMD.exe you must escape inner double quotes with backslashes:
+
+```powershell
+> dsq .\testdata\nested\nested.json 'select name, \"location.city\" from {}'
+[{"location.city":"Toronto","name":"Agarrah"},
+{"location.city":"Mexico City","name":"Minoara"},
+{"location.city":"New London","name":"Fontoon"}]
 ```
 
 #### Nested objects explained
