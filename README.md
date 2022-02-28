@@ -275,17 +275,11 @@ And many other similar tools:
 [csvq](https://github.com/mithrandie/csvq),
 [trdsql](https://github.com/noborus/trdsql).
 
-## Community
+## Community, support, help out
 
-[Join us on Discord](https://discord.multiprocess.io).
+For support, check out [#dsq on the Multiprocess Discord](https://discord.gg/9BRhAMhDa5).
 
-## How can I help?
-
-Download the app and use it! Report bugs on
-[Discord](https://discord.multiprocess.io).
-
-Before starting on any new feature though, check in on
-[Discord](https://discord.multiprocess.io)!
+If you're interested in helping out, check out [#dev on the Multiprocess Discord](https://discord.gg/22ZCpaS9qm).
 
 ## Subscribe
 
