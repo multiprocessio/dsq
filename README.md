@@ -9,7 +9,15 @@ version of this, check out DataStation.
 
 Binaries for amd64 (x86_64) are provided for each release.
 
-### macOS, Linux, WSL
+### macOS Homebrew
+
+`dsq` is available on macOS Homebrew:
+
+```bash
+$ brew install dsq
+```
+
+### Binaries on macOS, Linux, WSL
 
 On macOS, Linux, and WSL you can run the following:
 
@@ -23,18 +31,18 @@ Or install manually from the [releases
 page](https://github.com/multiprocessio/dsq/releases), unzip and add
 `dsq` to your `$PATH`.
 
-### Windows, not WSL
+### Binaries on Windows (not WSL)
 
 Download the [latest Windows
 release](https://github.com/multiprocessio/dsq/releases), unzip it,
 and add `dsq` to your `$PATH`.
 
-### Manual, and other Go platforms
+### Build and install from source
 
 If you are on another platform or architecture or want to grab the
 latest release, you can do so with Go 1.17+:
 
-```
+```bash
 $ go install github.com/multiprocessio/dsq@latest
 ```
 
