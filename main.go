@@ -51,14 +51,14 @@ func getShape(resultFile, panelId string) (*runner.Shape, error) {
 	return runner.ShapeFromFile(resultFile, panelId, runner.DefaultShapeMaxBytesToRead, 100)
 }
 
-var tableFileRe = regexp.MustCompile(`({(?P<number>[0-9]+)(((,\s*(?P<numbersinglepath>"(?:[^"\\]|\\.)*\"))?)|(,\s*(?P<numberdoublepath>'(?:[^'\\]|\\.)*\'))?)})`)
+var tableFileRe = regexp.MustCompile(`({(?P<number>[0-9]+)(((,\s*(?P<numbersinglepath>"(?:[^"\\]|\\.)*\"))?)|(,\s*(?P<numberdoublepath>'(?:[^'\\]|\\.)*\'))?)})|({((((?P<singlepath>"(?:[^"\\]|\\.)*\"))?)|((?P<doublepath>'(?:[^'\\]|\\.)*\'))?)})`)
 
 func rewriteQuery(query string) string {
 	query = strings.ReplaceAll(query, "{}", "DM_getPanel(0)")
 
 	query = tableFileRe.ReplaceAllStringFunc(query, func(m string) string {
 		matchForSubexps := tableFileRe.FindStringSubmatch(m)
-		index := ""
+		index := "0"
 		path := ""
 		for i, name := range tableFileRe.SubexpNames() {
 			if matchForSubexps[i] == "" {
@@ -68,7 +68,7 @@ func rewriteQuery(query string) string {
 			switch name {
 			case "number":
 				index = matchForSubexps[i]
-			case "numberdoublepath", "numbersinglepath":
+			case "numberdoublepath", "numbersinglepath", "doublepath", "singlepath":
 				path = matchForSubexps[i]
 			}
 		}

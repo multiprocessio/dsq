@@ -120,6 +120,11 @@ to_run = """./dsq ./testdata/path/path.json "SELECT * FROM {0, 'data.data'} ORDE
 want = '[{"id":3,"name":"Minh"},{"id":1,"name":"Corah"}]'
 test("Supports path specification", to_run, want, sort=True)
 
+# With path shorthand
+to_run = """./dsq ./testdata/path/path.json "SELECT * FROM {'data.data'} ORDER BY id DESC" """
+want = '[{"id":3,"name":"Minh"},{"id":1,"name":"Corah"}]'
+test("Supports path specification shorthand", to_run, want, sort=True)
+
 # Excel multiple sheets
 to_run = """./dsq testdata/excel/multiple-sheets.xlsx 'SELECT COUNT(1) AS n FROM {0, "Sheet2"}'"""
 want = '[{"n": 700}]'

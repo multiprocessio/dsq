@@ -163,11 +163,64 @@ $ dsq testdata.csv
 [{...some csv data...},{...some csv data...},...]
 ```
 
+### Nested array of objects & multiple Excel sheets
+
+DataStation and `dsq` need to operate on an array of objects. If your
+array of objects happens to be at the top-level, you don't need to do
+anything. But if your array data is nested within an object you can
+add a "path" parameter to the table reference.
+
+For example if you have this data:
+
+```json
+$ cat api-results.json
+{
+  "data": {
+    "data": [
+      {"id": 1, "name": "Corah"},
+      {"id": 3, "name": "Minh"}
+    ]
+  },
+  "total": 2
+}
+```
+
+You need to tell `dsq` that the path to the array data is `"data.data"`:
+
+```bash
+$ ./dsq --pretty api-results.json 'SELECT * FROM {0, "data.data"} ORDER BY id DESC'
++----+-------+
+| id | name  |
++----+-------+
+|  3 | Minh  |
+|  1 | Corah |
++----+-------+
+```
+
+You can also use the shorthand `{"path"}` or `{'path'}` if you only have one table:
+
+```bash
+$ ./dsq --pretty api-results.json 'SELECT * FROM {"data.data"} ORDER BY id DESC'
++----+-------+
+| id | name  |
++----+-------+
+|  3 | Minh  |
+|  1 | Corah |
++----+-------+
+```
+
+You can use either single or double quotes for the path.
+
+#### Limitation: nested arrays
+
+You cannot specify a path through an array, only objects.
+
 ### Nested object values
 
 It's easiest to show an example. Let's say you have the following JSON file called `user_addresses.json`:
 
 ```json
+$ cat user_addresses.json
 [
   {"name": "Agarrah", "location": {"city": "Toronto", "address": { "number": 1002 }}},
   {"name": "Minoara", "location": {"city": "Mexico City", "address": { "number": 19 }}},
@@ -252,12 +305,12 @@ $ dsq user_addresses.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
 |-----------|-|-|--------------------|
 | CSV | `csv` | `text/csv` | |
 | TSV | `tsv`, `tab` | `text/tab-separated-values` | |
-| JSON | `json` | `application/json` |  Must be an array of objects. |
+| JSON | `json` | `application/json` | |
 | Newline-delimited JSON | `ndjson`, `jsonl` | `application/jsonlines` | |
 | Concatenated JSON | `cjson` | `application/jsonconcat` ||
 | Parquet | `parquet` | `parquet` ||
-| Excel | `xlsx`, `xls` | `application/vnd.ms-excel` | Currently only works if there is only one sheet. |
-| ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` |  Currently only works if there is only one sheet. |
+| Excel | `xlsx`, `xls` | `application/vnd.ms-excel` ||
+| ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` ||
 | Apache Error Logs | NA | `text/apache2error` | Currently only works if being piped in. |
 | Apache Access Logs | NA | `text/apache2access` | Currently only works if being piped in. |
 | Nginx Access Logs | NA | `text/nginxaccess` | Currently only works if being piped in. |
