@@ -6,7 +6,7 @@ replace github.com/multiprocessio/datastation/runner => ../datastation/runner
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220308145313-d2b94d30fc3b
+	github.com/multiprocessio/datastation/runner v0.0.0-20220308165251-fb5006e70c36
 	github.com/olekukonko/tablewriter v0.0.5
 )
 

@@ -165,10 +165,10 @@ $ dsq testdata.csv
 
 ### Array of objects nested within an object
 
-DataStation and `dsq` need to operate on an array of objects. If your
-array of objects happens to be at the top-level, you don't need to do
-anything. But if your array data is nested within an object you can
-add a "path" parameter to the table reference.
+DataStation and `dsq`'s SQL integration operates on an array of
+objects. If your array of objects happens to be at the top-level, you
+don't need to do anything. But if your array data is nested within an
+object you can add a "path" parameter to the table reference.
 
 For example if you have this data:
 
