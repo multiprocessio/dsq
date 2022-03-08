@@ -172,7 +172,7 @@ add a "path" parameter to the table reference.
 
 For example if you have this data:
 
-```json
+```bash
 $ cat api-results.json
 {
   "data": {
