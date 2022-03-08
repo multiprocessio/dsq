@@ -21,7 +21,7 @@ def cmd(to_run, bash=False):
 tests = 0
 failures = 0
 
-def test(name, to_run, want, fail=False):
+def test(name, to_run, want, fail=False, sort=False):
     global tests
     global failures
     tests += 1
@@ -30,6 +30,10 @@ def test(name, to_run, want, fail=False):
     print('STARTING: ' + name)
 
     try:
+        if sort:
+            jq_sort  =" | jq --sort-keys ."
+            want = cmd(f"echo '{want}'" + jq_sort).decode()
+            to_run += jq_sort
         got = cmd(to_run).decode()
     except Exception as e:
         if not fail:
@@ -87,29 +91,40 @@ to_run = "./dsq testdata/join/users.csv testdata/join/ages.json 'select {0}.name
 want = """[{"age":88,"name":"Ted"},
 {"age":56,"name":"Marjory"},
 {"age":33,"name":"Micah"}]"""
-test("Join two file-tables", to_run, want)
+test("Join two file-tables", to_run, want, sort=True)
 
 # Nested values test
 to_run = """./dsq ./testdata/nested/nested.json 'select name, "location.city" city, "location.address.number" address_number from {}'"""
 want = """[{"address_number":1002,"city":"Toronto","name":"Agarrah"},
 {"address_number":19,"city":"Mexico City","name":"Minoara"},
 {"address_number":12,"city":"New London","name":"Fontoon"}]"""
-test("Extract nested values", to_run, want)
+test("Extract nested values", to_run, want, sort=True)
 
 # Not an array of data test
-to_run = "./dsq ./testdata/bad/not_an_array.json"
+to_run = "./dsq ./testdata/bad/not_an_array.json 'SELECT * FROM {}'"
 want = "Input is not an array of objects: ./testdata/bad/not_an_array.json."
 test("Does not allow querying on non-array data", to_run, want, fail=True)
 
 # REGEXP support
 to_run = """./dsq ./testdata/nested/nested.json "SELECT * FROM {} WHERE name REGEXP 'A.*'" """
 want = '[{"location.address.number":1002,"location.city":"Toronto","name":"Agarrah"}]'
-test("Supports filtering with REGEXP", to_run, want)
+test("Supports filtering with REGEXP", to_run, want, sort=True)
 
 # Table aliases
 to_run = """./dsq ./testdata/nested/nested.json "SELECT * FROM {} u WHERE u.name REGEXP 'A.*'" """
 want = '[{"location.address.number":1002,"location.city":"Toronto","name":"Agarrah"}]'
-test("Supports table aliases", to_run, want)
+test("Supports table aliases", to_run, want, sort=True)
+
+# With path
+to_run = """./dsq ./testdata/path/path.json "SELECT * FROM {0, 'data.data'} ORDER BY id DESC" """
+want = '[{"id":3,"name":"Minh"},{"id":1,"name":"Corah"}]'
+test("Supports path specification", to_run, want, sort=True)
+
+# Excel multiple sheets
+to_run = """./dsq testdata/excel/multiple-sheets.xlsx 'SELECT COUNT(1) AS n FROM {0, "Sheet2"}'"""
+want = '[{"n": 700}]'
+test("Supports Excel with multiple sheets", to_run, want, sort=True)
+
 
 # END OF TESTS
 
