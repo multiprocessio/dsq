@@ -319,12 +319,12 @@ $ dsq user_addresses.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
 |-----------|-|-|--------------------|
 | CSV | `csv` | `text/csv` | |
 | TSV | `tsv`, `tab` | `text/tab-separated-values` | |
-| JSON | `json` | `application/json` | |
-| Newline-delimited JSON | `ndjson`, `jsonl` | `application/jsonlines` | |
+| JSON | `json` | `application/json` | Must be an array of objects or a [path to an array of objects](https://github.com/multiprocessio/dsq#array-of-objects-nested-within-an-object). |
+| Newline-delimited JSON | `ndjson`, `jsonl` | `application/jsonlines` ||
 | Concatenated JSON | `cjson` | `application/jsonconcat` ||
 | Parquet | `parquet` | `parquet` ||
-| Excel | `xlsx`, `xls` | `application/vnd.ms-excel` ||
-| ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` ||
+| Excel | `xlsx`, `xls` | `application/vnd.ms-excel` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
+| ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
 | Apache Error Logs | NA | `text/apache2error` | Currently only works if being piped in. |
 | Apache Access Logs | NA | `text/apache2access` | Currently only works if being piped in. |
 | Nginx Access Logs | NA | `text/nginxaccess` | Currently only works if being piped in. |
