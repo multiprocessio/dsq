@@ -2,9 +2,7 @@ package main
 
 import (
 	"bytes"
-	"strconv"
 	"encoding/json"
-	"regexp"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +10,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/multiprocessio/datastation/runner"
@@ -303,7 +303,7 @@ func _main() error {
 		}
 
 		if e, ok := err.(*runner.DSError); ok && e.Name == "UserError" {
-			if e.Message[len(e.Message) -1] != '.' {
+			if e.Message[len(e.Message)-1] != '.' {
 				e.Message += "."
 			}
 			return errors.New(e.Message)
