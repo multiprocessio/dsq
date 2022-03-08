@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import os
 import shlex
 import subprocess
@@ -30,11 +31,10 @@ def test(name, to_run, want, fail=False, sort=False):
     print('STARTING: ' + name)
 
     try:
-        if sort:
-            jq_sort  =" | jq --sort-keys ."
-            want = cmd(f"echo '{want}'" + jq_sort).decode()
-            to_run += jq_sort
         got = cmd(to_run).decode()
+        if sort:
+            got = json.dumps(json.loads(got), sort_keys=True)
+            want = json.dumps(json.loads(want), sort_keys=True)
     except Exception as e:
         if not fail:
             print(f'  FAILURE: unexpected failure: ' + (e.output.decode() if isinstance(e, bytes) else str(e)))
