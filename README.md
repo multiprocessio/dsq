@@ -95,7 +95,7 @@ Or you can enable pretty printing with `-p` or `--pretty` in `dsq`
 which will display your results in an ASCII table.
 
 ```bash
-$ ./dsq --pretty testdata/userdata.parquet 'select count(*) from {}'
+$ dsq --pretty testdata/userdata.parquet 'select count(*) from {}'
 +----------+
 | count(*) |
 +----------+
@@ -163,7 +163,7 @@ $ dsq testdata.csv
 [{...some csv data...},{...some csv data...},...]
 ```
 
-### Nested array of objects & multiple Excel sheets
+### Array of objects nested within an object
 
 DataStation and `dsq` need to operate on an array of objects. If your
 array of objects happens to be at the top-level, you don't need to do
@@ -188,7 +188,7 @@ $ cat api-results.json
 You need to tell `dsq` that the path to the array data is `"data.data"`:
 
 ```bash
-$ ./dsq --pretty api-results.json 'SELECT * FROM {0, "data.data"} ORDER BY id DESC'
+$ dsq --pretty api-results.json 'SELECT * FROM {0, "data.data"} ORDER BY id DESC'
 +----+-------+
 | id | name  |
 +----+-------+
@@ -200,7 +200,7 @@ $ ./dsq --pretty api-results.json 'SELECT * FROM {0, "data.data"} ORDER BY id DE
 You can also use the shorthand `{"path"}` or `{'path'}` if you only have one table:
 
 ```bash
-$ ./dsq --pretty api-results.json 'SELECT * FROM {"data.data"} ORDER BY id DESC'
+$ dsq --pretty api-results.json 'SELECT * FROM {"data.data"} ORDER BY id DESC'
 +----+-------+
 | id | name  |
 +----+-------+
@@ -210,6 +210,20 @@ $ ./dsq --pretty api-results.json 'SELECT * FROM {"data.data"} ORDER BY id DESC'
 ```
 
 You can use either single or double quotes for the path.
+
+#### Multiple Excel sheets
+
+Excel files with multiple sheets are stored as an object with key
+being the sheet name and value being the sheet data as an array of
+objects.
+
+If you have an Excel file with two sheets called `Sheet1` and `Sheet2`
+you can run `dsq` on the second sheet by specifying the sheet name as
+the path:
+
+```bash
+$ dsq data.xlsx 'SELECT COUNT(1) FROM {"Sheet2"}'
+```
 
 #### Limitation: nested arrays
 
