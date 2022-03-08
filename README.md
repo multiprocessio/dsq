@@ -233,7 +233,7 @@ You cannot specify a path through an array, only objects.
 
 It's easiest to show an example. Let's say you have the following JSON file called `user_addresses.json`:
 
-```json
+```bash
 $ cat user_addresses.json
 [
   {"name": "Agarrah", "location": {"city": "Toronto", "address": { "number": 1002 }}},
