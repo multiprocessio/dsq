@@ -2,7 +2,8 @@ module github.com/multiprocessio/dsq
 
 go 1.17
 
-replace github.com/multiprocessio/datastation/runner => ../datastation/runner
+// Uncomment for local development
+// replace github.com/multiprocessio/datastation/runner => ../datastation/runner
 
 require (
 	github.com/google/uuid v1.3.0
