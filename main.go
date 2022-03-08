@@ -10,6 +10,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/multiprocessio/datastation/runner"
@@ -46,20 +48,39 @@ func evalFileInto(file string, out *os.File) error {
 }
 
 func getShape(resultFile, panelId string) (*runner.Shape, error) {
-	s, err := runner.ShapeFromFile(resultFile, panelId, 10_000, 100)
-	if err != nil {
-		return nil, err
-	}
+	return runner.ShapeFromFile(resultFile, panelId, runner.DefaultShapeMaxBytesToRead, 100)
+}
 
-	if !runner.ShapeIsObjectArray(*s) {
-		rest := "."
-		if panelId != "" {
-			rest = ": " + panelId + "."
+var tableFileRe = regexp.MustCompile(`({(?P<number>[0-9]+)(((,\s*(?P<numbersinglepath>"(?:[^"\\]|\\.)*\"))?)|(,\s*(?P<numberdoublepath>'(?:[^'\\]|\\.)*\'))?)})|({((((?P<singlepath>"(?:[^"\\]|\\.)*\"))?)|((?P<doublepath>'(?:[^'\\]|\\.)*\'))?)})`)
+
+func rewriteQuery(query string) string {
+	query = strings.ReplaceAll(query, "{}", "DM_getPanel(0)")
+
+	query = tableFileRe.ReplaceAllStringFunc(query, func(m string) string {
+		matchForSubexps := tableFileRe.FindStringSubmatch(m)
+		index := "0"
+		path := ""
+		for i, name := range tableFileRe.SubexpNames() {
+			if matchForSubexps[i] == "" {
+				continue
+			}
+
+			switch name {
+			case "number":
+				index = matchForSubexps[i]
+			case "numberdoublepath", "numbersinglepath", "doublepath", "singlepath":
+				path = matchForSubexps[i]
+			}
 		}
-		return nil, fmt.Errorf("Input is not an array of objects%s", rest)
-	}
 
-	return s, nil
+		if path != "" {
+			return fmt.Sprintf("DM_getPanel(%s, %s)", index, path)
+		}
+
+		return fmt.Sprintf("DM_getPanel(%s)", index)
+	})
+
+	return query
 }
 
 var Version = "latest"
@@ -202,7 +223,7 @@ func _main() error {
 						Shape: *s,
 					},
 					Id:   panelId,
-					Name: uuid.New().String(),
+					Name: file,
 				})
 
 				readFromStdin = true
@@ -257,11 +278,7 @@ func _main() error {
 	}
 	project.Connectors = append(project.Connectors, *connector)
 
-	query := lastNonFlagArg
-	query = strings.ReplaceAll(query, "{}", "DM_getPanel(0)")
-	for i := 0; i < len(project.Pages[0].Panels); i++ {
-		query = strings.ReplaceAll(query, fmt.Sprintf("{%d}", i), fmt.Sprintf("DM_getPanel(%d)", i))
-	}
+	query := rewriteQuery(lastNonFlagArg)
 	panel := &runner.PanelInfo{
 		Type:    runner.DatabasePanel,
 		Content: query,
@@ -276,6 +293,21 @@ func _main() error {
 
 	err = ec.EvalDatabasePanel(project, 0, panel, nil)
 	if err != nil {
+		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
+			rest := "."
+			nth, err := strconv.Atoi(e.TargetPanelId)
+			if err == nil {
+				rest = ": " + files[nth] + "."
+			}
+			return fmt.Errorf("Input is not an array of objects%s", rest)
+		}
+
+		if e, ok := err.(*runner.DSError); ok && e.Name == "UserError" {
+			if e.Message[len(e.Message)-1] != '.' {
+				e.Message += "."
+			}
+			return errors.New(e.Message)
+		}
 		return err
 	}
 
@@ -295,7 +327,7 @@ func _main() error {
 		return nil
 	}
 
-	s, err := runner.ShapeFromFile(resultFile, "results", 10_000, 100)
+	s, err := runner.ShapeFromFile(resultFile, "results", runner.DefaultShapeMaxBytesToRead, 100)
 	if err != nil {
 		return err
 	}
