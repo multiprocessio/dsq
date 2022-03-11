@@ -130,6 +130,10 @@ to_run = """./dsq testdata/excel/multiple-sheets.xlsx 'SELECT COUNT(1) AS n FROM
 want = '[{"n": 700}]'
 test("Supports Excel with multiple sheets", to_run, want, sort=True)
 
+# ORC support
+to_run = """./dsq ./testdata/userdata.orc "SELECT COUNT(*) FROM {} WHERE _col8='China'"""
+want = '[{"COUNT(*)":189}]'
+test("Supports Excel with multiple sheets", to_run, want, sort=True)
 
 # END OF TESTS
 
