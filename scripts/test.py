@@ -133,7 +133,7 @@ test("Supports Excel with multiple sheets", to_run, want, sort=True)
 # ORC support
 to_run = """./dsq ./testdata/userdata.orc "SELECT COUNT(*) FROM {} WHERE _col8='China'"""
 want = '[{"COUNT(*)":189}]'
-test("Supports Excel with multiple sheets", to_run, want, sort=True)
+test("Supports ORC files", to_run, want, sort=True)
 
 # END OF TESTS
 
