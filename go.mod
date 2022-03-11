@@ -7,7 +7,7 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220308165251-fb5006e70c36
+	github.com/multiprocessio/datastation/runner v0.0.0-20220311183454-aba843b46842
 	github.com/olekukonko/tablewriter v0.0.5
 )
 
@@ -85,6 +85,7 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/richardlehane/mscfb v1.0.3 // indirect
 	github.com/richardlehane/msoleps v1.0.1 // indirect
+	github.com/scritchley/orc v0.0.0-20210513144143-06dddf1ad665 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sijms/go-ora/v2 v2.4.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect

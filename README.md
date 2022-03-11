@@ -322,6 +322,7 @@ $ dsq user_addresses.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
 | JSON | `json` | `application/json` | Must be an array of objects or a [path to an array of objects](https://github.com/multiprocessio/dsq#array-of-objects-nested-within-an-object). |
 | Newline-delimited JSON | `ndjson`, `jsonl` | `application/jsonlines` ||
 | Concatenated JSON | `cjson` | `application/jsonconcat` ||
+| ORC | `orc` | `orc` ||
 | Parquet | `parquet` | `parquet` ||
 | Excel | `xlsx`, `xls` | `application/vnd.ms-excel` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
 | ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
