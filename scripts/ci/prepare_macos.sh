@@ -2,6 +2,8 @@
 
 set -eux
 
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew uninstall go@1.15
-brew install go@1.18 jq
+sudo curl -LO https://go.dev/dl/go1.18.darwin-amd64.tar.gz
+sudo rm -rf /usr/local/go
+sudo tar -C /usr/local -xzf go1.18.darwin-amd64.tar.gz
+sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
+sudo ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
