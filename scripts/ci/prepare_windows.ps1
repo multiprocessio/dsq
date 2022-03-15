@@ -5,9 +5,4 @@ scoop install jq zip curl
 
 curl -L -O "https://go.dev/dl/go1.18.windows-amd64.zip"
 unzip go1.18.windows-amd64.zip
-ls go
-ls go\bin
 Join-Path $pwd "go\bin" >> $Env:GITHUB_PATH
-which go
-where go
-go version
