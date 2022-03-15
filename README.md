@@ -40,7 +40,7 @@ and add `dsq` to your `$PATH`.
 ### Build and install from source
 
 If you are on another platform or architecture or want to grab the
-latest release, you can do so with Go 1.17+:
+latest release, you can do so with Go 1.18+:
 
 ```bash
 $ go install github.com/multiprocessio/dsq@latest
