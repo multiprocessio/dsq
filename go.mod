@@ -1,6 +1,6 @@
 module github.com/multiprocessio/dsq
 
-go 1.17
+go 1.18
 
 // Uncomment for local development
 // replace github.com/multiprocessio/datastation/runner => ../datastation/runner
