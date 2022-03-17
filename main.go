@@ -118,7 +118,7 @@ func _main() error {
 	stdin := false
 	pretty := false
 	for _, arg := range os.Args[1:] {
-		if arg == "-v" || arg == "--verbose" {
+		if arg == "--verbose" {
 			runner.Verbose = true
 			continue
 		}
@@ -136,6 +136,11 @@ func _main() error {
 		if arg == "-p" || arg == "--pretty" {
 			pretty = true
 			continue
+		}
+
+		if arg == "-v" || arg == "--version" {
+			log.Println("dsq " + Version)
+			return nil
 		}
 
 		nonFlagArgs = append(nonFlagArgs, arg)
