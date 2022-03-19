@@ -17,7 +17,7 @@ jobs:
     - run: echo "GIT_TAG=`git tag --points-at HEAD`" >> $GITHUB_ENV
     - run: |
         echo "RELEASE_ID=`curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/multiprocessio/dsq/releases/tags/$GIT_TAG | jq '.id'`" >> $GITHUB_ENV
-    - run: go build -ldflags "-s -w -X main.Version=$GIT_TAG"
+    - run: go build -trimpath -buildmode=pie -mod=readonly -modcacherw -ldflags "-s -w -X main.Version=$GIT_TAG"
     - run: zip dsq-linux-x64-$GIT_TAG.zip dsq
     - name: Upload on release
       run: |
@@ -39,7 +39,7 @@ jobs:
     - run: echo "GIT_TAG=`git tag --points-at HEAD`" >> $GITHUB_ENV
     - run: |
         echo "RELEASE_ID=`curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/multiprocessio/dsq/releases/tags/$GIT_TAG | jq '.id'`" >> $GITHUB_ENV
-    - run: go build -ldflags "-s -w -X main.Version=$GIT_TAG"
+    - run: go build -trimpath -buildmode=pie -mod=readonly -modcacherw -ldflags "-s -w -X main.Version=$GIT_TAG"
     - run: zip dsq-darwin-x64-$GIT_TAG.zip dsq
     - name: Upload release
       run: |
@@ -61,7 +61,7 @@ jobs:
     - run: echo "GIT_TAG=$(git tag --points-at HEAD)" >> $Env:GITHUB_ENV
     - run: |
         echo "RELEASE_ID=$(curl -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/multiprocessio/dsq/releases/tags/$Env:GIT_TAG | jq '.id')" >> $Env:GITHUB_ENV
-    - run: go build -ldflags "-s -w -X main.Version=$Env:GIT_TAG"
+    - run: go build -trimpath -buildmode=pie -mod=readonly -modcacherw -ldflags "-s -w -X main.Version=$Env:GIT_TAG"
     - run: zip dsq-win32-x64-$Env:GIT_TAG.zip dsq.exe
     - name: Upload release
       run: |
