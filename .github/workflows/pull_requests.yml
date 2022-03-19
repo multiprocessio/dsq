@@ -28,7 +28,7 @@ jobs:
         ref: ${{ github.ref }}
 
     - run: ./scripts/ci/prepare_linux.sh
-    - run: go build
+    - run: go build -trimpath -buildmode=pie -mod=readonly -modcacherw
     - run: ./scripts/test.py
 
   dsq-tests-windows:
@@ -41,7 +41,7 @@ jobs:
 
     - run: ./scripts/ci/prepare_windows.ps1
       shell: pwsh
-    - run: go build
+    - run: go build -trimpath -buildmode=pie -mod=readonly -modcacherw
     - run: ./scripts/test.py
       shell: bash
 
@@ -60,5 +60,5 @@ jobs:
         ref: ${{ github.ref }}
 
     - run: ./scripts/ci/prepare_macos.sh
-    - run: go build
+    - run: go build -trimpath -buildmode=pie -mod=readonly -modcacherw
     - run: ./scripts/test.py
