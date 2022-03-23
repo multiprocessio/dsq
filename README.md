@@ -1,5 +1,13 @@
 # Commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more.
 
+## Stay in the loop
+
+Since Github doesn't provide a great way for you to learn about new
+releases and features, don't just star the repo, join the [mailing
+list](https://docs.google.com/forms/d/e/1FAIpQLSfYF3AZivacRrQWanC-skd0iI23ermwPd17T_64Xc4etoL_Tw/viewform).
+
+## About
+
 This is a CLI companion to
 [DataStation](https://github.com/multiprocessio/datastation) (a GUI)
 for running SQL queries against data files. So if you want the GUI
@@ -385,12 +393,9 @@ And many other similar tools:
 
 For support, check out [#dsq on the Multiprocess Discord](https://discord.gg/9BRhAMhDa5).
 
-If you're interested in helping out, check out [#dev on the Multiprocess Discord](https://discord.gg/22ZCpaS9qm).
-
-## Subscribe
-
-If you want to hear about new features and how this works under
-the hood, [sign up here](https://forms.gle/wH5fdxrxXwZHoNxk8).
+If you're interested in helping out, join [#dev on the Multiprocess
+Discord](https://discord.gg/22ZCpaS9qm) and say hi! There are a ton of
+good first projects for developers with some Go experience.
 
 ## License
 
