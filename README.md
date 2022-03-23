@@ -272,21 +272,6 @@ JSON path to the value connected by `.`. Actual dots in the path must
 be escaped with a backslash. Since `.` is a special character in SQL
 you must quote the whole new column name.
 
-#### Limitation: nested arrays
-
-Nested objects within arrays are still ignored/dropped by `dsq`. So if
-you have data like this:
-
-```json
-[
-  {"field1": [1]},
-  {"field1": [2]},
-]
-```
-
-You cannot access any data within `field1`. You will need to
-preprocess your data with some other tool.
-
 #### Limitation: whole object retrieval
 
 You cannot query whole objects, you must ask for a specific path that
@@ -299,6 +284,51 @@ $ dsq user_addresses.json 'SELECT name, {}."location" FROM {}'
 ```
 
 Because `location` is not a scalar value. It is an object.
+
+### Nested arrays
+
+Nested arrays are converted to a JSON string when stored in
+SQLite. Since SQLite supports querying JSON strings you can access
+that data as structured data even though it is a string.
+
+So if you have data like this in `fields.json`:
+
+```json
+[
+  {"field1": [1]},
+  {"field1": [2]},
+]
+```
+
+You can request the entire field:
+
+```
+$ dsq fields.json "SELECT field1 FROM {}" | jq
+[
+  {
+    "field1": "[1]"
+  },
+  {
+    "field1": "[2]",
+  }
+]
+```
+
+#### JSON operators
+
+You can get the first value in the array using SQL JSON operators.
+
+```
+$ dsq fields.json "SELECT field1->0 FROM {}" | jq
+[
+  {
+    "field1->0": "1"
+  },
+  {
+    "field1->0": "2"
+  }
+]
+```
 
 ### REGEXP
 
