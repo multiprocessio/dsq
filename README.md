@@ -1,5 +1,13 @@
 # Commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more.
 
+## Stay in the loop
+
+Since Github doesn't provide a great way for you to learn about new
+releases and features, don't just star the repo, join the [mailing
+list](https://docs.google.com/forms/d/e/1FAIpQLSfYF3AZivacRrQWanC-skd0iI23ermwPd17T_64Xc4etoL_Tw/viewform).
+
+## About
+
 This is a CLI companion to
 [DataStation](https://github.com/multiprocessio/datastation) (a GUI)
 for running SQL queries against data files. So if you want the GUI
@@ -272,21 +280,6 @@ JSON path to the value connected by `.`. Actual dots in the path must
 be escaped with a backslash. Since `.` is a special character in SQL
 you must quote the whole new column name.
 
-#### Limitation: nested arrays
-
-Nested objects within arrays are still ignored/dropped by `dsq`. So if
-you have data like this:
-
-```json
-[
-  {"field1": [1]},
-  {"field1": [2]},
-]
-```
-
-You cannot access any data within `field1`. You will need to
-preprocess your data with some other tool.
-
 #### Limitation: whole object retrieval
 
 You cannot query whole objects, you must ask for a specific path that
@@ -299,6 +292,51 @@ $ dsq user_addresses.json 'SELECT name, {}."location" FROM {}'
 ```
 
 Because `location` is not a scalar value. It is an object.
+
+### Nested arrays
+
+Nested arrays are converted to a JSON string when stored in
+SQLite. Since SQLite supports querying JSON strings you can access
+that data as structured data even though it is a string.
+
+So if you have data like this in `fields.json`:
+
+```json
+[
+  {"field1": [1]},
+  {"field1": [2]},
+]
+```
+
+You can request the entire field:
+
+```
+$ dsq fields.json "SELECT field1 FROM {}" | jq
+[
+  {
+    "field1": "[1]"
+  },
+  {
+    "field1": "[2]",
+  }
+]
+```
+
+#### JSON operators
+
+You can get the first value in the array using SQL JSON operators.
+
+```
+$ dsq fields.json "SELECT field1->0 FROM {}" | jq
+[
+  {
+    "field1->0": "1"
+  },
+  {
+    "field1->0": "2"
+  }
+]
+```
 
 ### REGEXP
 
@@ -355,12 +393,9 @@ And many other similar tools:
 
 For support, check out [#dsq on the Multiprocess Discord](https://discord.gg/9BRhAMhDa5).
 
-If you're interested in helping out, check out [#dev on the Multiprocess Discord](https://discord.gg/22ZCpaS9qm).
-
-## Subscribe
-
-If you want to hear about new features and how this works under
-the hood, [sign up here](https://forms.gle/wH5fdxrxXwZHoNxk8).
+If you're interested in helping out, join [#dev on the Multiprocess
+Discord](https://discord.gg/22ZCpaS9qm) and say hi! There are a ton of
+good first projects for developers with some Go experience.
 
 ## License
 

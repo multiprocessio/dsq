@@ -135,7 +135,19 @@ to_run = """./dsq ./testdata/orc/test_data.orc 'SELECT COUNT(*) FROM {} WHERE _c
 want = '[{"COUNT(*)":189}]'
 test("Supports ORC files", to_run, want, sort=True)
 
+# Nested array support
+to_run = """./dsq ./testdata/regr/36.json 'SELECT c->1 AS secondc FROM {}'"""
+want = '[{"secondc": "2"}]'
+test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
+
 # END OF TESTS
+
+# START OF REGRESSION TESTS
+to_run = """./dsq ./testdata/regr/36.json 'SELECT * FROM {}'"""
+want = '[{"a": 1, "b": 2, "c": "[1,2]"}]'
+test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
+
+# END OF REGRESSION TESTS
 
 print(f"{tests - failures} of {tests} succeeded.")
 if failures > 0:
