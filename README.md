@@ -389,13 +389,29 @@ And many other similar tools:
 [csvq](https://github.com/mithrandie/csvq),
 [trdsql](https://github.com/noborus/trdsql).
 
-## Community, support, help out
+## Community
 
-For support, check out [#dsq on the Multiprocess Discord](https://discord.gg/9BRhAMhDa5).
+[Join us at #dsq on the Multiprocess Discord](https://discord.gg/9BRhAMhDa5).
+
+## How can I help?
+
+Download dsq and use it! Report bugs on
+[Discord](https://discord.gg/f2wQBc4bXX).
+
+If you're a developer with some Go experience looking to hack on open
+source, check out
+[GOOD_FIRST_PROJECTS.md](https://github.com/multiprocessio/datastation/blob/main/GOOD_FIRST_PROJECTS.md)
+in the DataStation repo.
+
+
 
 If you're interested in helping out, join [#dev on the Multiprocess
 Discord](https://discord.gg/22ZCpaS9qm) and say hi! There are a ton of
 good first projects for developers with some Go experience.
+
+If you're a developer with some Go experience looking to hack on open
+source, check out [GOOD_FIRST_PROJECTS.md](GOOD_FIRST_PROJECTS.md).
+
 
 ## License
 
