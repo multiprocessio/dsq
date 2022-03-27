@@ -403,16 +403,6 @@ source, check out
 [GOOD_FIRST_PROJECTS.md](https://github.com/multiprocessio/datastation/blob/main/GOOD_FIRST_PROJECTS.md)
 in the DataStation repo.
 
-
-
-If you're interested in helping out, join [#dev on the Multiprocess
-Discord](https://discord.gg/22ZCpaS9qm) and say hi! There are a ton of
-good first projects for developers with some Go experience.
-
-If you're a developer with some Go experience looking to hack on open
-source, check out [GOOD_FIRST_PROJECTS.md](GOOD_FIRST_PROJECTS.md).
-
-
 ## License
 
 This software is licensed under an Apache 2.0 license.
