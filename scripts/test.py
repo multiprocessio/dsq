@@ -140,6 +140,16 @@ to_run = """./dsq ./testdata/regr/36.json 'SELECT c->1 AS secondc FROM {}'"""
 want = '[{"secondc": "2"}]'
 test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 
+# Pretty column order
+to_run = """./dsq --pretty testdata/path/path.json 'SELECT name, id FROM {"data.data"}'"""
+want = """+----+-------+
+| id | name  |
++----+-------+
+|  1 | Corah |
+|  3 | Minh  |
++----+-------+"""
+test("Pretty column order alphabetical", to_run, want)
+
 # END OF TESTS
 
 # START OF REGRESSION TESTS

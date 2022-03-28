@@ -351,6 +351,18 @@ $ dsq user_addresses.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
 [{"location.address.number":1002,"location.city":"Toronto","name":"Agarrah"}]
 ```
 
+### Output column order
+
+When emitting JSON (i.e. without the `--pretty` flag) keys within an
+object are unordered.
+
+If order is important to you you can filter with `jq`: `dsq x.csv
+'SELECT a, b FROM {}' | jq --sort-keys`.
+
+With the `--pretty` flag, column order is purely alphabetical. It is
+not possible at the moment for the order to depend on the SQL query
+order.
+
 ## Supported Data Types
 
 | Name | File Extension(s) | Mime Type | Notes |
