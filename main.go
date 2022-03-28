@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -341,6 +342,7 @@ func _main() error {
 	for name := range s.ArrayShape.Children.ObjectShape.Children {
 		columns = append(columns, name)
 	}
+	sort.Strings(columns)
 
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader(columns)
