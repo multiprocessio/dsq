@@ -7,7 +7,7 @@ go 1.18
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220401215327-f508b178842f
+	github.com/multiprocessio/datastation/runner v0.0.0-20220410140410-53f84b03c898
 	github.com/olekukonko/tablewriter v0.0.5
 )
 
@@ -61,6 +61,8 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/lib/pq v1.10.4 // indirect
+	github.com/linkedin/goavro/v2 v2.11.1 // indirect
+	github.com/matoous/go-nanoid/v2 v2.0.0 // indirect
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mattn/go-sqlite3 v1.14.12 // indirect
