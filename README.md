@@ -374,6 +374,7 @@ order.
 | Concatenated JSON | `cjson` | `application/jsonconcat` ||
 | ORC | `orc` | `orc` ||
 | Parquet | `parquet` | `parquet` ||
+| Avro | `avro` || `application/avro` || 
 | Excel | `xlsx`, `xls` | `application/vnd.ms-excel` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
 | ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
 | Apache Error Logs | NA | `text/apache2error` | Currently only works if being piped in. |
