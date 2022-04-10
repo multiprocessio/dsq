@@ -7,7 +7,7 @@ go 1.18
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220410140410-53f84b03c898
+	github.com/multiprocessio/datastation/runner v0.0.0-20220410232529-002b803a5247
 	github.com/olekukonko/tablewriter v0.0.5
 )
 
