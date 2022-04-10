@@ -135,6 +135,11 @@ to_run = """./dsq ./testdata/orc/test_data.orc 'SELECT COUNT(*) FROM {} WHERE _c
 want = '[{"COUNT(*)":189}]'
 test("Supports ORC files", to_run, want, sort=True)
 
+# Avro support
+to_run = """./dsq ./testdata/avro/test_data.avro 'SELECT COUNT(*) FROM {} WHERE country="Sweden"'"""
+want = '[{"COUNT(*)":25}]'
+test("Supports Avro files", to_run, want, sort=True)
+
 # Nested array support
 to_run = """./dsq ./testdata/regr/36.json 'SELECT c->1 AS secondc FROM {}'"""
 want = '[{"secondc": "2"}]'
