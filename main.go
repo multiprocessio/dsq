@@ -84,6 +84,84 @@ func rewriteQuery(query string) string {
 	return query
 }
 
+func dumpJSONFile(file string, pretty bool, schema bool) error {
+	fd, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	if schema {
+		s, err := runner.ShapeFromFile(file, "doesn't-matter", runner.DefaultShapeMaxBytesToRead, 100)
+		if err != nil {
+			return err
+		}
+
+		if pretty {
+			_, err = fmt.Fprintf(os.Stdout, "%s\n", s.Pretty(""))
+			return err
+		}
+
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(s)
+	}
+
+	if !pretty {
+		// Dump the result to stdout
+		_, err := io.Copy(os.Stdout, fd)
+		if err != nil {
+			return err
+		}
+		fmt.Println()
+		return nil
+	}
+
+	s, err := runner.ShapeFromFile(file, "doesn't-matter", runner.DefaultShapeMaxBytesToRead, 100)
+	if err != nil {
+		return err
+	}
+	var columns []string
+	for name := range s.ArrayShape.Children.ObjectShape.Children {
+		columns = append(columns, name)
+	}
+	sort.Strings(columns)
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(columns)
+	table.SetAutoFormatHeaders(false)
+
+	dec := json.NewDecoder(fd)
+	var rows []map[string]interface{}
+	err = dec.Decode(&rows)
+	if err != nil {
+		return err
+	}
+
+	for _, objRow := range rows {
+		var row []string
+		for _, column := range columns {
+			var cell string
+			switch t := objRow[column].(type) {
+			case bool, byte, complex64, complex128, error, float32, float64,
+				int, int8, int16, int32, int64,
+				uint, uint16, uint32, uint64, uintptr:
+				cell = fmt.Sprintf("%#v", t)
+			case string:
+				cell = t
+			default:
+				cellBytes, _ := json.Marshal(t)
+				cell = string(cellBytes)
+			}
+			row = append(row, cell)
+		}
+		table.Append(row)
+	}
+
+	table.Render()
+	return nil
+}
+
 var Version = "latest"
 
 var HELP = `dsq (Version ` + Version + `) - commandline SQL engine for data files
@@ -118,6 +196,7 @@ func _main() error {
 	var nonFlagArgs []string
 	stdin := false
 	pretty := false
+	schema := false
 	for _, arg := range os.Args[1:] {
 		if arg == "--verbose" {
 			runner.Verbose = true
@@ -142,6 +221,11 @@ func _main() error {
 		if arg == "-v" || arg == "--version" {
 			log.Println("dsq " + Version)
 			return nil
+		}
+
+		if arg == "-c" || arg == "--schema" {
+			schema = true
+			continue
 		}
 
 		nonFlagArgs = append(nonFlagArgs, arg)
@@ -264,18 +348,7 @@ func _main() error {
 	// No query, just dump transformed file directly out
 	if lastNonFlagArg == "" {
 		resultFile := ec.GetPanelResultsFile(project.Id, project.Pages[0].Panels[0].Id)
-		fd, err := os.Open(resultFile)
-		if err != nil {
-			return err
-		}
-		defer fd.Close()
-
-		_, err = io.Copy(os.Stdout, fd)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return dumpJSONFile(resultFile, pretty, schema)
 	}
 
 	connector, err := runner.MakeTmpSQLiteConnector()
@@ -318,65 +391,7 @@ func _main() error {
 	}
 
 	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
-	fd, err := os.Open(resultFile)
-	if err != nil {
-		return fmt.Errorf("Could not open results file: %s", err)
-	}
-
-	if !pretty {
-		// Dump the result to stdout
-		_, err = io.Copy(os.Stdout, fd)
-		if err != nil {
-			return err
-		}
-		fmt.Println()
-		return nil
-	}
-
-	s, err := runner.ShapeFromFile(resultFile, "results", runner.DefaultShapeMaxBytesToRead, 100)
-	if err != nil {
-		return err
-	}
-
-	var columns []string
-	for name := range s.ArrayShape.Children.ObjectShape.Children {
-		columns = append(columns, name)
-	}
-	sort.Strings(columns)
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(columns)
-	table.SetAutoFormatHeaders(false)
-
-	dec := json.NewDecoder(fd)
-	var rows []map[string]interface{}
-	err = dec.Decode(&rows)
-	if err != nil {
-		return err
-	}
-
-	for _, objRow := range rows {
-		var row []string
-		for _, column := range columns {
-			var cell string
-			switch t := objRow[column].(type) {
-			case bool, byte, complex64, complex128, error, float32, float64,
-				int, int8, int16, int32, int64,
-				uint, uint16, uint32, uint64, uintptr:
-				cell = fmt.Sprintf("%#v", t)
-			case string:
-				cell = t
-			default:
-				cellBytes, _ := json.Marshal(t)
-				cell = string(cellBytes)
-			}
-			row = append(row, cell)
-		}
-		table.Append(row)
-	}
-
-	table.Render()
-	return nil
+	return dumpJSONFile(resultFile, pretty, schema)
 }
 
 func main() {

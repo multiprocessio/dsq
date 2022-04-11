@@ -155,6 +155,55 @@ want = """+----+-------+
 +----+-------+"""
 test("Pretty column order alphabetical", to_run, want)
 
+# Pretty without query
+to_run = """./dsq --pretty testdata/regr/36.json"""
+want = """+---+---+-------+
+| a | b |   c   |
++---+---+-------+
+| 1 | 2 | [1,2] |
++---+---+-------+"""
+test("Pretty works even without query", to_run, want)
+
+# Prints schema pretty
+to_run = """./dsq --pretty --schema testdata/regr/36.json"""
+want = """Array of
+  Object of
+    a of
+      number
+    b of
+      number
+    c of
+      Array of
+        number
+"""
+test("Pretty prints schema", to_run, want)
+
+# Prints schema as JSON
+to_run = """./dsq --schema testdata/regr/36.json"""
+want = """{
+  "kind": "array",
+  "array": {
+    "kind": "object",
+    "object": {
+      "b": {
+        "kind": "scalar",
+        "scalar": "number"
+      },
+      "c": {
+        "kind": "array",
+        "array": {
+          "kind": "scalar",
+          "scalar": "number"
+        }
+      },
+      "a": {
+        "kind": "scalar",
+        "scalar": "number"
+      }
+    }
+  }
+}"""
+test("Prints schema as JSON", to_run, want, sort=True)
 # END OF TESTS
 
 # START OF REGRESSION TESTS
