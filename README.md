@@ -363,6 +363,62 @@ With the `--pretty` flag, column order is purely alphabetical. It is
 not possible at the moment for the order to depend on the SQL query
 order.
 
+### Dumping inferred schema
+
+For any supported file you can dump the inferred schema rather than
+dumping the data or running a SQL query. Set the `--schema` flag to do
+this.
+
+The inferred schema is very simple, only JSON types are supported. If
+the underlying format (like Parquet) supports finer-grained data types
+(like int64) this will not show up in the inferred schema. It will
+show up just as `number`.
+
+For example:
+
+```
+$ dsq testdata/avro/test_data.avro --schema --pretty
+Array of
+  Object of
+    birthdate of
+      string
+    cc of
+      Varied of
+        Object of
+          long of
+            number or
+        Unknown
+    comments of
+      string
+    country of
+      string
+    email of
+      string
+    first_name of
+      string
+    gender of
+      string
+    id of
+      number
+    ip_address of
+      string
+    last_name of
+      string
+    registration_dttm of
+      string
+    salary of
+      Varied of
+        Object of
+          double of
+            number or
+        Unknown
+    title of
+      string
+```
+
+You can print this as a structured JSON string by omitting the
+`--pretty` flag when setting the `--schema` flag.
+
 ## Supported Data Types
 
 | Name | File Extension(s) | Mime Type | Notes |
