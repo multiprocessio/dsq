@@ -458,6 +458,10 @@ And many other similar tools:
 [csvq](https://github.com/mithrandie/csvq),
 [trdsql](https://github.com/noborus/trdsql).
 
+## Third-party integrations
+
+* [ob-dsq](https://github.com/fritzgrabo/ob-dsq)
+
 ## Community
 
 [Join us at #dsq on the Multiprocess Discord](https://discord.gg/9BRhAMhDa5).
