@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -162,6 +164,30 @@ func dumpJSONFile(file string, pretty bool, schema bool) error {
 	return nil
 }
 
+func getFilesContentHash(files []string) (string, error) {
+
+	var contents []byte
+	for _, f := range files {
+		c, err := os.ReadFile(f)
+		if err != nil {
+			return "", err
+		}
+		contents = append(contents, c...)
+	}
+
+	sha1 := sha1.New()
+	_, err := sha1.Write(contents)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(sha1.Sum(nil)), nil
+}
+
+func getCachedDBPath(projectID string) string {
+	return "dsq-cache/" + projectID + ".db"
+}
+
 var Version = "latest"
 
 var HELP = `dsq (Version ` + Version + `) - commandline SQL engine for data files
@@ -197,6 +223,7 @@ func _main() error {
 	stdin := false
 	pretty := false
 	schema := false
+	cache := false
 	for _, arg := range os.Args[1:] {
 		if arg == "--verbose" {
 			runner.Verbose = true
@@ -228,6 +255,11 @@ func _main() error {
 			continue
 		}
 
+		if arg == "--cache" {
+			cache = true
+			continue
+		}
+
 		nonFlagArgs = append(nonFlagArgs, arg)
 	}
 
@@ -250,13 +282,24 @@ func _main() error {
 		return errors.New("No input files.")
 	}
 
-	projectTmp, err := ioutil.TempFile("", "dsq-project")
-	if err != nil {
-		return err
+	var projectID string
+	if cache {
+		hash, err := getFilesContentHash(files)
+		if err != nil {
+			return err
+		}
+		projectID = hash
+	} else {
+		projectTmp, err := ioutil.TempFile("", "dsq-project")
+		if err != nil {
+			return err
+		}
+		projectID = projectTmp.Name()
 	}
-	defer os.Remove(projectTmp.Name())
+
+	defer os.Remove(projectID)
 	project := &runner.ProjectState{
-		Id: projectTmp.Name(),
+		Id: projectID,
 		Pages: []runner.ProjectPage{
 			{
 				Panels: nil,
@@ -270,7 +313,25 @@ func _main() error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	ec := runner.NewEvalContext(*runner.DefaultSettings, tmpDir)
+	settings := *runner.DefaultSettings
+	if cache {
+		if _, err := os.Stat(getCachedDBPath(project.Id)); err != nil {
+			var pathError *os.PathError
+			if errors.As(err, &pathError) {
+				file, err := openTruncate(getCachedDBPath(project.Id))
+				if err != nil {
+					return err
+				}
+				file.Close()
+			} else {
+				return err
+			}
+		} else {
+			settings.CacheMode = true // only when database is present on disk
+		}
+	}
+
+	ec := runner.NewEvalContext(settings, tmpDir)
 	for i := 0; i < len(files); i++ {
 		file := files[i]
 		panelId := uuid.New().String()
@@ -355,6 +416,13 @@ func _main() error {
 	if err != nil {
 		return err
 	}
+	if cache {
+		path, err := filepath.Abs(getCachedDBPath(project.Id))
+		if err != nil {
+			return err
+		}
+		connector.DatabaseConnectorInfo.Database.Database = path
+	}
 	project.Connectors = append(project.Connectors, *connector)
 
 	query := rewriteQuery(lastNonFlagArg)
@@ -397,6 +465,6 @@ func _main() error {
 func main() {
 	err := _main()
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 }

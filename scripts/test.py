@@ -213,6 +213,26 @@ test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 
 # END OF REGRESSION TESTS
 
+# Cache test
+to_run = """
+curl https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-04.csv -o taxi.csv;
+./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count";
+"""
+want = """
+[{"COUNT(*)":128020,"AVG(total_amount)":32.23715114825533,"passenger_count":""},
+{"passenger_count":"0","COUNT(*)":42228,"AVG(total_amount)":17.021401676615067},
+{"COUNT(*)":1533197,"AVG(total_amount)":17.641883306799908,"passenger_count":"1"},
+{"passenger_count":"2","COUNT(*)":286461,"AVG(total_amount)":18.097587071145647},
+{"passenger_count":"3","COUNT(*)":72852,"AVG(total_amount)":17.915395871092315},
+{"passenger_count":"4","COUNT(*)":25510,"AVG(total_amount)":18.452774990196012},
+{"passenger_count":"5","COUNT(*)":50291,"AVG(total_amount)":17.270924817567234},
+{"passenger_count":"6","COUNT(*)":32623,"AVG(total_amount)":17.600296416636713},
+{"passenger_count":"7","COUNT(*)":2,"AVG(total_amount)":87.17},
+{"passenger_count":"8","COUNT(*)":2,"AVG(total_amount)":95.705},
+{"passenger_count":"9","COUNT(*)":1,"AVG(total_amount)":113.6}]
+"""
+test("Cache Test", to_run, want, sort=True)
+
 print(f"{tests - failures} of {tests} succeeded.")
 if failures > 0:
     sys.exit(1)
