@@ -527,6 +527,6 @@ func _main() error {
 func main() {
 	err := _main()
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 }
