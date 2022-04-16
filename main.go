@@ -164,44 +164,47 @@ func dumpJSONFile(file string, pretty bool, schema bool) error {
 	return nil
 }
 
-func getFilesContentHash(files []string, tmp string) (string, error) {
+func getFilesContentHash(files []string, tmp string) (string, bool, error) {
 	sha1 := sha1.New()
+	stdinTmpCopy := false
 
 	for i := 0; i < len(files); i++ {
 		if files[i] == "" {
 			i += 1
 			b, err := io.ReadAll(os.Stdin)
 			if err != nil {
-				return "", err
+				return "", false, err
 			}
 
 			if _, err := sha1.Write(b); err != nil {
-				return "", err
+				return "", false, err
 			}
 
 			file, err := os.OpenFile(tmp, os.O_RDWR, os.ModePerm)
 			if err != nil {
-				return "", err
+				return "", false, err
 			}
 
 			if _, err := file.Write(b); err != nil {
-				return "", err
+				return "", false, err
 			}
+			file.Close()
+			stdinTmpCopy = true
 
 		} else {
 			file, err := os.Open(files[i])
 			if err != nil {
-				return "", err
+				return "", false, err
 			}
-			defer file.Close()
 			_, err = io.Copy(sha1, file)
 			if err != nil {
-				return "", err
+				return "", false, err
 			}
+			file.Close()
 		}
 	}
 
-	return hex.EncodeToString(sha1.Sum(nil)), nil
+	return hex.EncodeToString(sha1.Sum(nil)), stdinTmpCopy, nil
 }
 
 func getCachedDBPath(projectID string) string {
@@ -308,9 +311,14 @@ func _main() error {
 	}
 	projectID := projectTmp.Name()
 	if cache {
-		projectID, err = getFilesContentHash(files, projectTmp.Name())
+		stdinTmpCopy := false
+		projectID, stdinTmpCopy, err = getFilesContentHash(files, projectTmp.Name())
 		if err != nil {
-			return err
+			fmt.Printf("Error creating hash for cache mode: %v, defaulting to normal mode", err)
+			cache = false
+		}
+		if stdinTmpCopy {
+			files = append(files, projectTmp.Name())
 		}
 	}
 	defer os.Remove(projectTmp.Name())
@@ -324,6 +332,7 @@ func _main() error {
 		},
 	}
 
+	settings := *runner.DefaultSettings
 	tmpDir, err := os.MkdirTemp("", "dsq")
 	if err != nil {
 		return err
@@ -331,66 +340,29 @@ func _main() error {
 	defer os.RemoveAll(tmpDir)
 	if cache {
 		tmpDir = "dsq-cache"
+		settings.CacheMode = &cache
 	}
-
-	settings := *runner.DefaultSettings
 	ec := runner.NewEvalContext(settings, tmpDir)
 
-	if cache {
-		// sqlite file is present on disk
-		if info, err := os.Stat(getCachedDBPath(project.Id)); err != nil || info.Size() == 0 {
-			file, err := openTruncate(getCachedDBPath(project.Id))
-			if err != nil {
-				return err
-			}
-			file.Close()
-		} else {
-			settings.CacheMode = true
-			ec = runner.NewEvalContext(settings, tmpDir)
-		}
-
-		notPresentFiles := []string{}
-		for i := 0; i < len(files); i++ {
-			// if transformed json file is on disk
-			if info, err := os.Stat(ec.GetPanelResultsFile(projectID, files[i])); err != nil || info.Size() == 0 {
-				notPresentFiles = append(notPresentFiles, files[i])
-				if files[i] == "" {
-					notPresentFiles = append(notPresentFiles, files[i+1])
-					i += 1
-				}
-				continue
-			}
-			s, err := getShape(ec.GetPanelResultsFile(projectID, files[i]), files[i])
-			if err != nil {
-				return err
-			}
-
-			project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
-				ResultMeta: runner.PanelResult{
-					Shape: *s,
-				},
-				Id:   files[i],
-				Name: files[i],
-			})
-
-			if files[i] == "" {
-				i += 1
-			}
-		}
-		files = notPresentFiles
-	}
-
 	for i := 0; i < len(files); i++ {
+		skipImport := false
 		file := files[i]
 		panelId := uuid.New().String()
 		resultFile := ec.GetPanelResultsFile(project.Id, panelId)
+		out := &os.File{}
 		if cache {
 			panelId = file
 			resultFile = ec.GetPanelResultsFile(project.Id, file)
+			// Transformed json file is on disk.
+			if info, err := os.Stat(resultFile); err == nil && info.Size() > 0 {
+				skipImport = true
+			}
 		}
-		out, err := openTruncate(resultFile)
-		if err != nil {
-			return err
+		if !skipImport {
+			out, err = openTruncate(resultFile)
+			if err != nil {
+				return err
+			}
 		}
 
 		readFromStdin := false
@@ -410,17 +382,22 @@ func _main() error {
 				}
 				i += 1
 
-				// stdin has been exhausted after hashing
+				var r io.Reader = bytes.NewReader(b)
 				if cache {
-					b, err = io.ReadAll(projectTmp)
+					r, err = os.Open(files[len(files)-1])
+					if err != nil {
+						fmt.Printf("Error opening copied stdin file: %v, defaulting to normal mode", err)
+					} else {
+						files = files[:len(files)-1]
+					}
+				}
+
+				if !skipImport {
+					cti := runner.ContentTypeInfo{Type: string(mimetype)}
+					err := runner.TransformReader(r, "", cti, out)
 					if err != nil {
 						return err
 					}
-				}
-				cti := runner.ContentTypeInfo{Type: string(mimetype)}
-				err := runner.TransformReader(bytes.NewReader(b), "", cti, out)
-				if err != nil {
-					return err
 				}
 
 				s, err := getShape(resultFile, "")
@@ -442,7 +419,7 @@ func _main() error {
 			continue
 		}
 
-		if !readFromStdin {
+		if !readFromStdin && !skipImport {
 			err := evalFileInto(file, out)
 			if err != nil {
 				return err
@@ -479,6 +456,11 @@ func _main() error {
 		path, err := filepath.Abs(getCachedDBPath(projectID))
 		if err != nil {
 			return err
+		}
+		if info, err := os.Stat(path); err != nil || info.Size() == 0 {
+			fmt.Println("SQLite file is not found on disk, creating a new one...")
+			cache = false
+			ec = runner.NewEvalContext(settings, tmpDir)
 		}
 		connector.DatabaseConnectorInfo.Database.Database = path
 	}
@@ -518,9 +500,7 @@ func _main() error {
 	}
 
 	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
-	if cache {
-		defer os.Remove(resultFile)
-	}
+	defer os.Remove(resultFile) // in cache mode, dsq-cache dir is not remove.
 	return dumpJSONFile(resultFile, pretty, schema)
 }
 

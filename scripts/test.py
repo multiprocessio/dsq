@@ -216,7 +216,7 @@ test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 # Cache test
 to_run = """
 curl https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-04.csv -o taxi.csv;
-./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count";
+./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC";
 """
 want = """
 [{"COUNT(*)":128020,"AVG(total_amount)":32.23715114825533,"passenger_count":""},
@@ -231,13 +231,13 @@ want = """
 {"passenger_count":"8","COUNT(*)":2,"AVG(total_amount)":95.705},
 {"passenger_count":"9","COUNT(*)":1,"AVG(total_amount)":113.6}]
 """
-test("Caching from file", to_run, want)
+test("Caching from file", to_run, want, sort=True)
 
 to_run = """
-cat taxi.csv | ./dsq --cache -s csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count";
+cat taxi.csv | ./dsq --cache -s csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC";
 """
 
-test("Caching from pipe", to_run, want)
+test("Caching from pipe", to_run, want, sort=True)
 
 print(f"{tests - failures} of {tests} succeeded.")
 if failures > 0:
