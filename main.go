@@ -33,7 +33,7 @@ func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 
 func openTruncate(out string) (*os.File, error) {
 	base := filepath.Dir(out)
-	_ = os.Mkdir(base, os.ModePerm)
+	_ = os.MkdirAll(base, os.ModePerm)
 	return os.OpenFile(out, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 }
 
@@ -164,21 +164,50 @@ func dumpJSONFile(file string, pretty bool, schema bool) error {
 	return nil
 }
 
-func getFilesContentHash(files []string) (string, error) {
-
-	var contents []byte
-	for _, f := range files {
-		c, err := os.ReadFile(f)
-		if err != nil {
-			return "", err
-		}
-		contents = append(contents, c...)
-	}
-
+func getFilesContentHash(files []string, tmp string) (string, error) {
 	sha1 := sha1.New()
-	_, err := sha1.Write(contents)
-	if err != nil {
-		return "", err
+	buf := make([]byte, 4*sha1.BlockSize())
+
+	for i := 0; i < len(files); i++ {
+		if files[i] == "" {
+			i += 1
+			b, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return "", err
+			}
+
+			if _, err := sha1.Write(b); err != nil {
+				return "", err
+			}
+
+			file, err := os.OpenFile(tmp, os.O_RDWR, os.ModePerm)
+			if err != nil {
+				return "", err
+			}
+
+			if _, err := file.Write(b); err != nil {
+				return "", err
+			}
+
+		} else {
+			file, err := os.Open(files[i])
+			if err != nil {
+				return "", err
+			}
+			defer file.Close()
+			for {
+				n, err := file.Read(buf)
+				if n > 0 {
+					_, err := sha1.Write(buf[:n])
+					if err != nil {
+						return "", err
+					}
+				}
+				if err != nil {
+					break
+				}
+			}
+		}
 	}
 
 	return hex.EncodeToString(sha1.Sum(nil)), nil
@@ -282,22 +311,19 @@ func _main() error {
 		return errors.New("No input files.")
 	}
 
-	var projectID string
-	if cache {
-		hash, err := getFilesContentHash(files)
-		if err != nil {
-			return err
-		}
-		projectID = hash
-	} else {
-		projectTmp, err := ioutil.TempFile("", "dsq-project")
-		if err != nil {
-			return err
-		}
-		projectID = projectTmp.Name()
+	projectTmp, err := ioutil.TempFile("", "dsq-project")
+	if err != nil {
+		return err
 	}
+	projectID := projectTmp.Name()
+	if cache {
+		projectID, err = getFilesContentHash(files, projectTmp.Name())
+		if err != nil {
+			return err
+		}
+	}
+	defer os.Remove(projectTmp.Name())
 
-	defer os.Remove(projectID)
 	project := &runner.ProjectState{
 		Id: projectID,
 		Pages: []runner.ProjectPage{
@@ -312,30 +338,65 @@ func _main() error {
 		return err
 	}
 	defer os.RemoveAll(tmpDir)
-
-	settings := *runner.DefaultSettings
 	if cache {
-		if _, err := os.Stat(getCachedDBPath(project.Id)); err != nil {
-			var pathError *os.PathError
-			if errors.As(err, &pathError) {
-				file, err := openTruncate(getCachedDBPath(project.Id))
-				if err != nil {
-					return err
-				}
-				file.Close()
-			} else {
-				return err
-			}
-		} else {
-			settings.CacheMode = true // only when database is present on disk
-		}
+		tmpDir = "dsq-cache"
 	}
 
+	settings := *runner.DefaultSettings
 	ec := runner.NewEvalContext(settings, tmpDir)
+
+	if cache {
+		// sqlite file is present on disk
+		if info, err := os.Stat(getCachedDBPath(project.Id)); err != nil || info.Size() == 0 {
+			file, err := openTruncate(getCachedDBPath(project.Id))
+			if err != nil {
+				return err
+			}
+			file.Close()
+		} else {
+			settings.CacheMode = true
+			ec = runner.NewEvalContext(settings, tmpDir)
+		}
+
+		notPresentFiles := []string{}
+		for i := 0; i < len(files); i++ {
+			// if transformed json file is on disk
+			if info, err := os.Stat(ec.GetPanelResultsFile(projectID, files[i])); err != nil || info.Size() == 0 {
+				notPresentFiles = append(notPresentFiles, files[i])
+				if files[i] == "" {
+					notPresentFiles = append(notPresentFiles, files[i+1])
+					i += 1
+				}
+				continue
+			}
+			s, err := getShape(ec.GetPanelResultsFile(projectID, files[i]), files[i])
+			if err != nil {
+				return err
+			}
+
+			project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
+				ResultMeta: runner.PanelResult{
+					Shape: *s,
+				},
+				Id:   files[i],
+				Name: files[i],
+			})
+
+			if files[i] == "" {
+				i += 1
+			}
+		}
+		files = notPresentFiles
+	}
+
 	for i := 0; i < len(files); i++ {
 		file := files[i]
 		panelId := uuid.New().String()
 		resultFile := ec.GetPanelResultsFile(project.Id, panelId)
+		if cache {
+			panelId = file
+			resultFile = ec.GetPanelResultsFile(project.Id, file)
+		}
 		out, err := openTruncate(resultFile)
 		if err != nil {
 			return err
@@ -358,6 +419,13 @@ func _main() error {
 				}
 				i += 1
 
+				// stdin has been exhausted after hashing
+				if cache {
+					b, err = io.ReadAll(projectTmp)
+					if err != nil {
+						return err
+					}
+				}
 				cti := runner.ContentTypeInfo{Type: string(mimetype)}
 				err := runner.TransformReader(bytes.NewReader(b), "", cti, out)
 				if err != nil {
@@ -417,7 +485,7 @@ func _main() error {
 		return err
 	}
 	if cache {
-		path, err := filepath.Abs(getCachedDBPath(project.Id))
+		path, err := filepath.Abs(getCachedDBPath(projectID))
 		if err != nil {
 			return err
 		}
@@ -459,6 +527,9 @@ func _main() error {
 	}
 
 	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
+	if cache {
+		defer os.Remove(resultFile)
+	}
 	return dumpJSONFile(resultFile, pretty, schema)
 }
 

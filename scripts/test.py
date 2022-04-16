@@ -231,7 +231,13 @@ want = """
 {"passenger_count":"8","COUNT(*)":2,"AVG(total_amount)":95.705},
 {"passenger_count":"9","COUNT(*)":1,"AVG(total_amount)":113.6}]
 """
-test("Cache Test", to_run, want, sort=True)
+test("Caching from file", to_run, want)
+
+to_run = """
+cat taxi.csv | ./dsq --cache -s csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count";
+"""
+
+test("Caching from pipe", to_run, want)
 
 print(f"{tests - failures} of {tests} succeeded.")
 if failures > 0:
