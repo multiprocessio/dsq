@@ -386,7 +386,7 @@ func _main() error {
 				if cache {
 					r, err = os.Open(files[len(files)-1])
 					if err != nil {
-						fmt.Printf("Error opening copied stdin file: %v, defaulting to normal mode", err)
+						return fmt.Errorf("Error opening copied stdin file: %v", err) // returns as it's not possible to go back to default.
 					} else {
 						files = files[:len(files)-1]
 					}
