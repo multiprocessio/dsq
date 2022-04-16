@@ -166,7 +166,6 @@ func dumpJSONFile(file string, pretty bool, schema bool) error {
 
 func getFilesContentHash(files []string, tmp string) (string, error) {
 	sha1 := sha1.New()
-	buf := make([]byte, 4*sha1.BlockSize())
 
 	for i := 0; i < len(files); i++ {
 		if files[i] == "" {
@@ -195,17 +194,9 @@ func getFilesContentHash(files []string, tmp string) (string, error) {
 				return "", err
 			}
 			defer file.Close()
-			for {
-				n, err := file.Read(buf)
-				if n > 0 {
-					_, err := sha1.Write(buf[:n])
-					if err != nil {
-						return "", err
-					}
-				}
-				if err != nil {
-					break
-				}
+			_, err = io.Copy(sha1, file)
+			if err != nil {
+				return "", err
 			}
 		}
 	}
