@@ -246,7 +246,7 @@ func _main() error {
 	stdin := false
 	pretty := false
 	schema := false
-	cache := false
+	var cache *bool // cache == nil: normal mode, cache == true: sqlite present, cache == false: sqlite not present
 	for _, arg := range os.Args[1:] {
 		if arg == "--verbose" {
 			runner.Verbose = true
@@ -279,7 +279,8 @@ func _main() error {
 		}
 
 		if arg == "--cache" {
-			cache = true
+			c := true
+			cache = &c
 			continue
 		}
 
@@ -310,12 +311,13 @@ func _main() error {
 		return err
 	}
 	projectID := projectTmp.Name()
-	if cache {
+
+	if cache != nil {
 		stdinTmpCopy := false
 		projectID, stdinTmpCopy, err = getFilesContentHash(files, projectTmp.Name())
 		if err != nil {
 			log.Printf("Error creating hash for cache mode: %v, defaulting to normal mode", err)
-			cache = false
+			*cache = false
 		}
 		if stdinTmpCopy {
 			files = append(files, projectTmp.Name())
@@ -338,108 +340,101 @@ func _main() error {
 		return err
 	}
 	defer os.RemoveAll(tmpDir)
-	if cache {
+	if cache != nil {
 		tmpDir = "dsq-cache"
-		settings.CacheMode = &cache
-	}
-	ec := runner.NewEvalContext(settings, tmpDir)
-
-	for i := 0; i < len(files); i++ {
-		skipImport := false
-		file := files[i]
-		panelId := uuid.New().String()
-		resultFile := ec.GetPanelResultsFile(project.Id, panelId)
-		out := &os.File{}
-		if cache {
-			panelId = file
-			resultFile = ec.GetPanelResultsFile(project.Id, file)
-			// Transformed json file is on disk.
-			if info, err := os.Stat(resultFile); err == nil && info.Size() > 0 {
-				skipImport = true
-			}
+		settings.CacheMode = cache
+		if info, err := os.Stat(getCachedDBPath(projectID)); err != nil || info.Size() == 0 {
+			log.Println("SQLite file is not found on disk, creating a new one...")
+			*cache = false
 		}
-		if !skipImport {
-			out, err = openTruncate(resultFile)
+	}
+
+	ec := runner.NewEvalContext(settings, tmpDir)
+	if cache == nil || *cache == false {
+		for i := 0; i < len(files); i++ {
+			file := files[i]
+			panelId := uuid.New().String()
+			resultFile := ec.GetPanelResultsFile(project.Id, panelId)
+			out, err := openTruncate(resultFile)
 			if err != nil {
 				return err
 			}
-		}
+			defer os.Remove(resultFile)
 
-		readFromStdin := false
-		if file == "" {
-			b, err := ioutil.ReadAll(os.Stdin)
-			if err == nil {
-				if i == len(files)-1 {
-					return errors.New("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
-				}
-				mimetype := files[i+1]
-				if !strings.Contains(mimetype, string(filepath.Separator)) {
-					mimetype = string(runner.GetMimeType("x."+mimetype, runner.ContentTypeInfo{}))
-				}
-
-				if mimetype == "" {
-					return fmt.Errorf("Unknown mimetype or file extension: %s.", mimetype)
-				}
-				i += 1
-
-				var r io.Reader = bytes.NewReader(b)
-				if cache {
-					r, err = os.Open(files[len(files)-1])
-					if err != nil {
-						return fmt.Errorf("Error opening copied stdin file: %v", err) // returns as it's not possible to go back to default.
-					} else {
-						files = files[:len(files)-1]
+			readFromStdin := false
+			if file == "" {
+				b, err := ioutil.ReadAll(os.Stdin)
+				if err == nil {
+					if i == len(files)-1 {
+						return errors.New("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
 					}
-				}
+					mimetype := files[i+1]
+					if !strings.Contains(mimetype, string(filepath.Separator)) {
+						mimetype = string(runner.GetMimeType("x."+mimetype, runner.ContentTypeInfo{}))
+					}
 
-				if !skipImport {
+					if mimetype == "" {
+						return fmt.Errorf("Unknown mimetype or file extension: %s.", mimetype)
+					}
+					i += 1
+
+					var r io.Reader = bytes.NewReader(b)
+					if cache != nil && *cache == false {
+						r, err = os.Open(files[len(files)-1])
+						if err != nil {
+							return fmt.Errorf("Error opening copied stdin file: %v", err) // returns as it's not possible to go back to default.
+						} else {
+							files = files[:len(files)-1]
+						}
+					}
+
 					cti := runner.ContentTypeInfo{Type: string(mimetype)}
 					err := runner.TransformReader(r, "", cti, out)
 					if err != nil {
 						return err
 					}
+
+					s, err := getShape(resultFile, "")
+					if err != nil {
+						return err
+					}
+
+					project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
+						ResultMeta: runner.PanelResult{
+							Shape: *s,
+						},
+						Id:   panelId,
+						Name: file,
+					})
+
+					readFromStdin = true
 				}
 
-				s, err := getShape(resultFile, "")
+				continue
+			}
+
+			if !readFromStdin {
+				err := evalFileInto(file, out)
 				if err != nil {
 					return err
 				}
-
-				project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
-					ResultMeta: runner.PanelResult{
-						Shape: *s,
-					},
-					Id:   panelId,
-					Name: file,
-				})
-
-				readFromStdin = true
 			}
 
-			continue
-		}
-
-		if !readFromStdin && !skipImport {
-			err := evalFileInto(file, out)
+			s, err := getShape(resultFile, file)
 			if err != nil {
 				return err
 			}
+
+			project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
+				ResultMeta: runner.PanelResult{
+					Shape: *s,
+				},
+				Id:   panelId,
+				Name: uuid.New().String(),
+			})
+
+			out.Close()
 		}
-
-		s, err := getShape(resultFile, file)
-		if err != nil {
-			return err
-		}
-
-		project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
-			ResultMeta: runner.PanelResult{
-				Shape: *s,
-			},
-			Id:   panelId,
-			Name: uuid.New().String(),
-		})
-
-		out.Close()
 	}
 
 	// No query, just dump transformed file directly out
@@ -452,15 +447,11 @@ func _main() error {
 	if err != nil {
 		return err
 	}
-	if cache {
+
+	if cache != nil {
 		path, err := filepath.Abs(getCachedDBPath(projectID))
 		if err != nil {
 			return err
-		}
-		if info, err := os.Stat(path); err != nil || info.Size() == 0 {
-			log.Println("SQLite file is not found on disk, creating a new one...")
-			cache = false
-			ec = runner.NewEvalContext(settings, tmpDir)
 		}
 		connector.DatabaseConnectorInfo.Database.Database = path
 	}
