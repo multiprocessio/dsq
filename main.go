@@ -314,7 +314,7 @@ func _main() error {
 		stdinTmpCopy := false
 		projectID, stdinTmpCopy, err = getFilesContentHash(files, projectTmp.Name())
 		if err != nil {
-			fmt.Printf("Error creating hash for cache mode: %v, defaulting to normal mode", err)
+			log.Printf("Error creating hash for cache mode: %v, defaulting to normal mode", err)
 			cache = false
 		}
 		if stdinTmpCopy {
@@ -458,7 +458,7 @@ func _main() error {
 			return err
 		}
 		if info, err := os.Stat(path); err != nil || info.Size() == 0 {
-			fmt.Println("SQLite file is not found on disk, creating a new one...")
+			log.Println("SQLite file is not found on disk, creating a new one...")
 			cache = false
 			ec = runner.NewEvalContext(settings, tmpDir)
 		}
