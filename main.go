@@ -169,38 +169,47 @@ func getFilesContentHash(files []string, tmp string) (string, bool, error) {
 	stdinTmpCopy := false
 
 	for i := 0; i < len(files); i++ {
-		if files[i] == "" {
-			i += 1
-			b, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return "", false, err
-			}
+		err := func() error {
+			if files[i] == "" {
+				i += 1
+				b, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
 
-			if _, err := sha1.Write(b); err != nil {
-				return "", false, err
-			}
+				if _, err := sha1.Write(b); err != nil {
+					return err
+				}
 
-			file, err := os.OpenFile(tmp, os.O_RDWR, os.ModePerm)
-			if err != nil {
-				return "", false, err
-			}
+				file, err := os.OpenFile(tmp, os.O_RDWR, os.ModePerm)
+				if err != nil {
+					return err
+				}
+				defer file.Close()
 
-			if _, err := file.Write(b); err != nil {
-				return "", false, err
-			}
-			file.Close()
-			stdinTmpCopy = true
+				if _, err := file.Write(b); err != nil {
+					return err
+				}
 
-		} else {
-			file, err := os.Open(files[i])
-			if err != nil {
-				return "", false, err
+				stdinTmpCopy = true
+				return nil
+			} else {
+				file, err := os.Open(files[i])
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+
+				_, err = io.Copy(sha1, file)
+				if err != nil {
+					return err
+				}
+
+				return nil
 			}
-			_, err = io.Copy(sha1, file)
-			if err != nil {
-				return "", false, err
-			}
-			file.Close()
+		}()
+		if err != nil {
+			return "", false, err
 		}
 	}
 
@@ -208,7 +217,7 @@ func getFilesContentHash(files []string, tmp string) (string, bool, error) {
 }
 
 func getCachedDBPath(projectID string) string {
-	return "dsq-cache/" + projectID + ".db"
+	return "/tmp/" + projectID + ".db"
 }
 
 var Version = "latest"
@@ -242,100 +251,98 @@ See the repo for more details: https://github.com/multiprocessio/dsq.`
 func importFiles(cacheMode bool, files []string, ec *runner.EvalContext, project *runner.ProjectState) ([]string, error) {
 	toDelete := []string{}
 	for i := 0; i < len(files); i++ {
-		file := files[i]
-		panelId := uuid.New().String()
-		resultFile := ec.GetPanelResultsFile(project.Id, panelId)
-		out, err := openTruncate(resultFile)
-		if err != nil {
-			return nil, err
-		}
-		toDelete = append(toDelete, resultFile)
-
-		readFromStdin := false
-		if file == "" {
-			b, err := ioutil.ReadAll(os.Stdin)
-			if err == nil {
-				if i == len(files)-1 {
-					return nil, errors.New("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
-				}
-				mimetype := files[i+1]
-				if !strings.Contains(mimetype, string(filepath.Separator)) {
-					mimetype = string(runner.GetMimeType("x."+mimetype, runner.ContentTypeInfo{}))
-				}
-
-				if mimetype == "" {
-					return nil, fmt.Errorf("Unknown mimetype or file extension: %s.", mimetype)
-				}
-				i += 1
-
-				var r io.Reader = bytes.NewReader(b)
-				if cacheMode {
-					r, err = os.Open(files[len(files)-1])
-					if err != nil {
-						return nil, fmt.Errorf("Error opening copied stdin file: %v", err) // returns as it's not possible to go back to default.
-					} else {
-						files = files[:len(files)-1]
-					}
-				}
-
-				cti := runner.ContentTypeInfo{Type: string(mimetype)}
-				err := runner.TransformReader(r, "", cti, out)
-				if err != nil {
-					return nil, err
-				}
-
-				s, err := getShape(resultFile, "")
-				if err != nil {
-					return nil, err
-				}
-
-				project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
-					ResultMeta: runner.PanelResult{
-						Shape: *s,
-					},
-					Id:   panelId,
-					Name: file,
-				})
-
-				readFromStdin = true
-			}
-
-			continue
-		}
-
-		if !readFromStdin {
-			err := evalFileInto(file, out)
+		if err := func() error {
+			file := files[i]
+			panelId := uuid.New().String()
+			resultFile := ec.GetPanelResultsFile(project.Id, panelId)
+			out, err := openTruncate(resultFile)
 			if err != nil {
-				return nil, err
+				return err
 			}
-		}
+			defer out.Close()
+			toDelete = append(toDelete, resultFile)
 
-		s, err := getShape(resultFile, file)
-		if err != nil {
+			if file == "" {
+				b, err := ioutil.ReadAll(os.Stdin)
+				if err == nil {
+					if i == len(files)-1 {
+						return errors.New("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
+					}
+					mimetype := files[i+1]
+					if !strings.Contains(mimetype, string(filepath.Separator)) {
+						mimetype = string(runner.GetMimeType("x."+mimetype, runner.ContentTypeInfo{}))
+					}
+
+					if mimetype == "" {
+						return fmt.Errorf("Unknown mimetype or file extension: %s.", mimetype)
+					}
+					i += 1
+
+					var r io.Reader = bytes.NewReader(b)
+					if cacheMode {
+						r, err = os.Open(files[len(files)-1])
+						if err != nil {
+							return fmt.Errorf("Error opening copied stdin file: %v", err) // returns as it's not possible to go back to default.
+						} else {
+							files = files[:len(files)-1]
+						}
+					}
+
+					cti := runner.ContentTypeInfo{Type: string(mimetype)}
+					err := runner.TransformReader(r, "", cti, out)
+					if err != nil {
+						return err
+					}
+
+					s, err := getShape(resultFile, "")
+					if err != nil {
+						return err
+					}
+
+					project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
+						ResultMeta: runner.PanelResult{
+							Shape: *s,
+						},
+						Id:   panelId,
+						Name: file,
+					})
+
+				}
+
+				return nil
+			}
+
+			if err := evalFileInto(file, out); err != nil {
+				return err
+			}
+
+			s, err := getShape(resultFile, file)
+			if err != nil {
+				return err
+			}
+
+			project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
+				ResultMeta: runner.PanelResult{
+					Shape: *s,
+				},
+				Id:   panelId,
+				Name: uuid.New().String(),
+			})
+
+			return nil
+		}(); err != nil {
 			return nil, err
 		}
-
-		project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
-			ResultMeta: runner.PanelResult{
-				Shape: *s,
-			},
-			Id:   panelId,
-			Name: uuid.New().String(),
-		})
-
-		out.Close()
 	}
-
 	return toDelete, nil
 }
 
-func cleanUp(files []string) error {
+func cleanUp(files []string) {
 	for _, f := range files {
 		if err := os.Remove(f); err != nil {
-			return err
+			log.Printf("Error deleting file %s: %v", f, err)
 		}
 	}
-	return nil
 }
 
 func _main() error {
@@ -438,7 +445,7 @@ func _main() error {
 	}
 	defer os.RemoveAll(tmpDir)
 	if cacheSettings.Enabled {
-		tmpDir = "dsq-cache"
+		tmpDir = "/tmp"
 		if info, err := os.Stat(getCachedDBPath(projectID)); err != nil || info.Size() == 0 {
 			log.Println("SQLite file is not found on disk, creating a new one...")
 		} else {
@@ -510,10 +517,8 @@ func _main() error {
 
 	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
 	toDelete = append(toDelete, resultFile)
-	if err := dumpJSONFile(resultFile, pretty, schema); err != nil {
-		return err
-	}
-	return cleanUp(toDelete)
+	defer cleanUp(toDelete)
+	return dumpJSONFile(resultFile, pretty, schema)
 }
 
 func main() {
