@@ -9,9 +9,9 @@ import tempfile
 
 WIN = os.name == 'nt'
 
-def cmd(to_run, bash=False):
+def cmd(to_run, bash=False, doNotReplaceWin=False):
     pieces = shlex.split(to_run)
-    if WIN:
+    if WIN and not doNotReplaceWin:
         for i, piece in enumerate(pieces):
             pieces[i] = piece.replace('./dsq', './dsq.exe').replace('/', '\\')
     elif bash or '|' in pieces:
@@ -231,7 +231,7 @@ want = """
 {"passenger_count":"9","COUNT(*)":1,"AVG(total_amount)":113.6}]
 """
 
-cmd("curl https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-04.csv -o taxi.csv")
+cmd("curl https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-04.csv -o taxi.csv", doNotReplaceWin=True)
 test("Caching from file", to_run, want, sort=True)
 
 to_run = """
