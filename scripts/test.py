@@ -215,7 +215,7 @@ test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 
 # Cache test
 to_run = """
-./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC"
+./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC --verbose"
 """
 want = """
 [{"AVG(total_amount)":17.641883306799908,"passenger_count":"1","COUNT(*)":1533197},
