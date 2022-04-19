@@ -35,12 +35,17 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False):
       return
 
     try:
-        got = cmd(to_run).decode()
+        out = cmd(to_run).decode()
+        got = out
         if sort:
             got = json.dumps(json.loads(got), sort_keys=True)
             want = json.dumps(json.loads(want), sort_keys=True)
+    except json.JSONDecodeError as je:
+        print('  FAILURE: bad JSON: ' + out)
+        return
     except Exception as e:
         if not fail:
+            print(e)
             print(f'  FAILURE: unexpected failure: ' + (e.output.decode() if isinstance(e, bytes) else str(e)))
             failures += 1
             print()
