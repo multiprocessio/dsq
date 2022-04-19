@@ -288,7 +288,6 @@ func importFilesIteration(cacheMode bool, filesPtr *[]string, ec *runner.EvalCon
 					*filesPtr = files[:len(files)-1]
 				}
 			}
-			fmt.Println(files)
 
 			cti := runner.ContentTypeInfo{Type: string(mimetype)}
 			err := runner.TransformReader(r, "", cti, out)
