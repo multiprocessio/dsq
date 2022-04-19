@@ -443,9 +443,7 @@ func _main() error {
 	}
 	defer os.RemoveAll(tmpDir)
 	if cacheSettings.Enabled {
-		if info, err := os.Stat(getCachedDBPath(projectID)); err != nil || info.Size() == 0 {
-			log.Println("SQLite file is not found on disk, creating a new one...")
-		} else {
+		if info, err := os.Stat(getCachedDBPath(projectID)); err == nil && info.Size() != 0 {
 			cacheSettings.CachePresent = true
 		}
 	}
