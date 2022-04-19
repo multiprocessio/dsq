@@ -352,7 +352,7 @@ func _main() error {
 	stdin := false
 	pretty := false
 	schema := false
-	cacheSettings := runner.DefaultSettings.CacheSettings
+	cacheSettings := runner.DefaultCacheSettings
 	for _, arg := range os.Args[1:] {
 		if arg == "--verbose" {
 			runner.Verbose = true
@@ -495,7 +495,7 @@ func _main() error {
 		},
 	}
 
-	err = ec.EvalDatabasePanel(project, 0, panel, nil)
+	err = ec.EvalDatabasePanel(project, 0, panel, nil, cacheSettings)
 	if err != nil {
 		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
 			rest := "."
