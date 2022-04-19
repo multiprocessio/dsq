@@ -87,7 +87,7 @@ want = "No input files."
 test("Handles no arguments correctly", to_run, want, fail=True)
 
 # Join test
-to_run = "./dsq testdata/join/users.csv testdata/join/ages.json 'select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id'"
+to_run = "`./dsq testdata/join/users.csv testdata/join/ages.json 'select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id'`"
 want = """[{"age":88,"name":"Ted"},
 {"age":56,"name":"Marjory"},
 {"age":33,"name":"Micah"}]"""
@@ -215,7 +215,7 @@ test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 
 # Cache test
 to_run = """
-./dsq --verbose --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC"
+./dsq --cache taxi.csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
 """
 want = """
 [{"AVG(total_amount)":17.641883306799908,"passenger_count":"1","COUNT(*)":1533197},
@@ -235,7 +235,7 @@ cmd("curl https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-04.csv
 test("Caching from file", to_run, want, sort=True)
 
 to_run = """
-cat taxi.csv | ./dsq --verbose --cache -s csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC"
+cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
 """
 
 test("Caching from pipe", to_run, want, sort=True)
