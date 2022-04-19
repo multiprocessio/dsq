@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
 	"log"
@@ -164,50 +165,53 @@ func dumpJSONFile(file string, pretty bool, schema bool) error {
 	return nil
 }
 
+func getFilesContentIteration(stdinTmpCopy *bool, sha1 hash.Hash, fileName, tmp string, i int) (int, error) {
+	if fileName == "" {
+		i += 1
+		b, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return i, err
+		}
+
+		if _, err := sha1.Write(b); err != nil {
+			return i, err
+		}
+
+		file, err := os.OpenFile(tmp, os.O_RDWR, os.ModePerm)
+		if err != nil {
+			return i, err
+		}
+		defer file.Close()
+
+		if _, err := file.Write(b); err != nil {
+			return i, err
+		}
+		*stdinTmpCopy = true
+
+		return i, nil
+	} else {
+		file, err := os.Open(fileName)
+		if err != nil {
+			return i, err
+		}
+		defer file.Close()
+
+		_, err = io.Copy(sha1, file)
+		if err != nil {
+			return i, err
+		}
+
+		return i, nil
+	}
+}
+
 func getFilesContentHash(files []string, tmp string) (string, bool, error) {
 	sha1 := sha1.New()
 	stdinTmpCopy := false
+	var err error
 
 	for i := 0; i < len(files); i++ {
-		err := func() error {
-			if files[i] == "" {
-				i += 1
-				b, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-
-				if _, err := sha1.Write(b); err != nil {
-					return err
-				}
-
-				file, err := os.OpenFile(tmp, os.O_RDWR, os.ModePerm)
-				if err != nil {
-					return err
-				}
-				defer file.Close()
-
-				if _, err := file.Write(b); err != nil {
-					return err
-				}
-
-				stdinTmpCopy = true
-				return nil
-			} else {
-				file, err := os.Open(files[i])
-				if err != nil {
-					return err
-				}
-				defer file.Close()
-
-				_, err = io.Copy(sha1, file)
-				if err != nil {
-					return err
-				}
-
-				return nil
-			}
-		}()
+		i, err = getFilesContentIteration(&stdinTmpCopy, sha1, files[i], tmp, i)
 		if err != nil {
 			return "", false, err
 		}
@@ -248,77 +252,53 @@ Examples:
 
 See the repo for more details: https://github.com/multiprocessio/dsq.`
 
-func importFiles(cacheMode bool, files []string, ec *runner.EvalContext, project *runner.ProjectState) ([]string, error) {
-	toDelete := []string{}
-	for i := 0; i < len(files); i++ {
-		if err := func() error {
-			file := files[i]
-			panelId := uuid.New().String()
-			resultFile := ec.GetPanelResultsFile(project.Id, panelId)
-			out, err := openTruncate(resultFile)
-			if err != nil {
-				return err
+func importFilesIteration(cacheMode bool, filesPtr *[]string, ec *runner.EvalContext, project *runner.ProjectState, i int) (int, error) {
+	files := *filesPtr
+	file := files[i]
+	panelId := uuid.New().String()
+	resultFile := ec.GetPanelResultsFile(project.Id, panelId)
+	out, err := openTruncate(resultFile)
+	if err != nil {
+		return i, err
+	}
+	defer out.Close()
+
+	if file == "" {
+		b, err := ioutil.ReadAll(os.Stdin)
+		if err == nil {
+			if i == len(files)-1 {
+				return i, errors.New("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
 			}
-			defer out.Close()
-			toDelete = append(toDelete, resultFile)
+			mimetype := files[i+1]
+			if !strings.Contains(mimetype, string(filepath.Separator)) {
+				mimetype = string(runner.GetMimeType("x."+mimetype, runner.ContentTypeInfo{}))
+			}
 
-			if file == "" {
-				b, err := ioutil.ReadAll(os.Stdin)
-				if err == nil {
-					if i == len(files)-1 {
-						return errors.New("Expected file extension or mimetype: e.g. cat x.csv | dsq -s csv, or cat x.csv | dsq -s text/csv")
-					}
-					mimetype := files[i+1]
-					if !strings.Contains(mimetype, string(filepath.Separator)) {
-						mimetype = string(runner.GetMimeType("x."+mimetype, runner.ContentTypeInfo{}))
-					}
+			if mimetype == "" {
+				return i, fmt.Errorf("Unknown mimetype or file extension: %s.", mimetype)
+			}
+			i += 1
 
-					if mimetype == "" {
-						return fmt.Errorf("Unknown mimetype or file extension: %s.", mimetype)
-					}
-					i += 1
-
-					var r io.Reader = bytes.NewReader(b)
-					if cacheMode {
-						r, err = os.Open(files[len(files)-1])
-						if err != nil {
-							return fmt.Errorf("Error opening copied stdin file: %v", err) // returns as it's not possible to go back to default.
-						} else {
-							files = files[:len(files)-1]
-						}
-					}
-
-					cti := runner.ContentTypeInfo{Type: string(mimetype)}
-					err := runner.TransformReader(r, "", cti, out)
-					if err != nil {
-						return err
-					}
-
-					s, err := getShape(resultFile, "")
-					if err != nil {
-						return err
-					}
-
-					project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
-						ResultMeta: runner.PanelResult{
-							Shape: *s,
-						},
-						Id:   panelId,
-						Name: file,
-					})
-
+			var r io.Reader = bytes.NewReader(b)
+			if cacheMode {
+				r, err = os.Open(files[len(files)-1])
+				if err != nil {
+					return i, fmt.Errorf("Error opening copied stdin file: %v", err) // returns as it's not possible to go back to default.
+				} else {
+					*filesPtr = files[:len(files)-1]
 				}
-
-				return nil
 			}
+			fmt.Println(files)
 
-			if err := evalFileInto(file, out); err != nil {
-				return err
-			}
-
-			s, err := getShape(resultFile, file)
+			cti := runner.ContentTypeInfo{Type: string(mimetype)}
+			err := runner.TransformReader(r, "", cti, out)
 			if err != nil {
-				return err
+				return i, err
+			}
+
+			s, err := getShape(resultFile, "")
+			if err != nil {
+				return i, err
 			}
 
 			project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
@@ -326,23 +306,42 @@ func importFiles(cacheMode bool, files []string, ec *runner.EvalContext, project
 					Shape: *s,
 				},
 				Id:   panelId,
-				Name: uuid.New().String(),
+				Name: file,
 			})
 
-			return nil
-		}(); err != nil {
-			return nil, err
 		}
+
+		return i, nil
 	}
-	return toDelete, nil
+
+	if err := evalFileInto(file, out); err != nil {
+		return i, err
+	}
+
+	s, err := getShape(resultFile, file)
+	if err != nil {
+		return i, err
+	}
+
+	project.Pages[0].Panels = append(project.Pages[0].Panels, runner.PanelInfo{
+		ResultMeta: runner.PanelResult{
+			Shape: *s,
+		},
+		Id:   panelId,
+		Name: uuid.New().String(),
+	})
+
+	return i, nil
 }
 
-func cleanUp(files []string) {
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			log.Printf("Error deleting file %s: %v", f, err)
+func importFiles(cacheMode bool, files []string, ec *runner.EvalContext, project *runner.ProjectState) error {
+	var err error
+	for i := 0; i < len(files); i++ {
+		if i, err = importFilesIteration(cacheMode, &files, ec, project, i); err != nil {
+			return err
 		}
 	}
+	return nil
 }
 
 func _main() error {
@@ -445,7 +444,6 @@ func _main() error {
 	}
 	defer os.RemoveAll(tmpDir)
 	if cacheSettings.Enabled {
-		tmpDir = "/tmp"
 		if info, err := os.Stat(getCachedDBPath(projectID)); err != nil || info.Size() == 0 {
 			log.Println("SQLite file is not found on disk, creating a new one...")
 		} else {
@@ -454,9 +452,8 @@ func _main() error {
 	}
 
 	ec := runner.NewEvalContext(*runner.DefaultSettings, tmpDir)
-	toDelete := []string{}
 	if !cacheSettings.CachePresent || !cacheSettings.Enabled {
-		toDelete, err = importFiles(cacheSettings.Enabled, files, &ec, project)
+		err := importFiles(cacheSettings.Enabled, files, &ec, project)
 		if err != nil {
 			return err
 		}
@@ -495,7 +492,7 @@ func _main() error {
 		},
 	}
 
-	err = ec.EvalDatabasePanel(project, 0, panel, nil, cacheSettings)
+	err = ec.EvalDatabasePanel(project, 0, panel, nil, *cacheSettings)
 	if err != nil {
 		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
 			rest := "."
@@ -516,8 +513,6 @@ func _main() error {
 	}
 
 	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
-	toDelete = append(toDelete, resultFile)
-	defer cleanUp(toDelete)
 	return dumpJSONFile(resultFile, pretty, schema)
 }
 
