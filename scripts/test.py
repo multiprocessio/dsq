@@ -87,7 +87,7 @@ want = "No input files."
 test("Handles no arguments correctly", to_run, want, fail=True)
 
 # Join test
-to_run = "`./dsq testdata/join/users.csv testdata/join/ages.json 'select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id'`"
+to_run = "./dsq testdata/join/users.csv testdata/join/ages.json 'select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id'"
 want = """[{"age":88,"name":"Ted"},
 {"age":56,"name":"Marjory"},
 {"age":33,"name":"Micah"}]"""
