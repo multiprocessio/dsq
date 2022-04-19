@@ -28,12 +28,11 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False):
     tests += 1
     skipped = True
 
+    print('STARTING: ' + name)
+
     if WIN and winSkip:
       print(f'  SKIPPED\n')
       return
-
-
-    print('STARTING: ' + name)
 
     try:
         got = cmd(to_run).decode()
@@ -220,7 +219,7 @@ test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 
 # Cache test
 to_run = """
-./dsq --cache taxi.csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
+./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC"
 """
 want = """
 [{"AVG(total_amount)":17.641883306799908,"passenger_count":"1","COUNT(*)":1533197},
