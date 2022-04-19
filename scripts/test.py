@@ -22,11 +22,16 @@ def cmd(to_run, bash=False, doNotReplaceWin=False):
 tests = 0
 failures = 0
 
-def test(name, to_run, want, fail=False, sort=False):
+def test(name, to_run, want, fail=False, sort=False, winSkip=False):
     global tests
     global failures
     tests += 1
     skipped = True
+
+    if WIN and winSkip:
+      print(f'  SKIPPED\n')
+      return
+
 
     print('STARTING: ' + name)
 
@@ -238,7 +243,7 @@ to_run = """
 cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
 """
 
-test("Caching from pipe", to_run, want, sort=True)
+test("Caching from pipe", to_run, want, sort=True, winSkip=True)
 
 print(f"{tests - failures} of {tests} succeeded.")
 if failures > 0:

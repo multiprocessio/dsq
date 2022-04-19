@@ -221,7 +221,7 @@ func getFilesContentHash(files []string, tmp string) (string, bool, error) {
 }
 
 func getCachedDBPath(projectID string) string {
-	return "/tmp/" + projectID + ".db"
+	return filepath.Join(os.TempDir(), projectID+".db")
 }
 
 var Version = "latest"
