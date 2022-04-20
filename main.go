@@ -418,7 +418,7 @@ func _main() error {
 	defer os.RemoveAll(tmpDir)
 
 	// Does no harm in calculating this even if caching is not on. A few places use this path.
-	cachedPath := filepath.Join(os.TempDir(), projectIdHashOrTmp+".db")
+	cachedPath := filepath.Join(os.TempDir(), "dsq-cache-"+projectIdHashOrTmp+".db")
 	if args.cacheSettings.Enabled {
 		info, err := os.Stat(cachedPath)
 		args.cacheSettings.CachePresent = err == nil && info.Size() != 0

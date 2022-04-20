@@ -253,8 +253,8 @@ test("Not specifying sql file", to_run, want="", want_stderr=want_stderr, fail=T
 
 # Cache test
 # Drop the db file on disk to make sure this test's cache is clean.
-res = cmd("./dsq --cache-file taxi.csv")
-for f in glob.glob(res.stdout.decode().strip() + "*"):
+for f in glob.glob(os.path.join(tempfile.gettempdir(), "dsq-cache-*.db*")):
+    print("Deleting existing dsq database file: " + f)
     os.remove(f)
     
 to_run = """
