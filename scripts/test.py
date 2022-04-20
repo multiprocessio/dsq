@@ -17,7 +17,7 @@ def cmd(to_run, bash=False, doNotReplaceWin=False):
     elif bash or '|' in pieces:
         pieces = ['bash', '-c', to_run]
 
-    return subprocess.check_output(pieces, stderr=subprocess.STDOUT, cwd=os.getcwd())
+    return subprocess.check_output(pieces, stderr=subprocess.STDOUT , cwd=os.getcwd())
 
 tests = 0
 failures = 0
@@ -41,7 +41,7 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False):
             want = json.dumps(json.loads(want), sort_keys=True)
     except Exception as e:
         if not fail:
-            print(f'  FAILURE: unexpected failure: ' + (e.output.decode() if isinstance(e, bytes) else str(e)))
+            print(f'  FAILURE: unexpected failure: {0} {1}', str(e), e.output.decode())
             failures += 1
             print()
             return
