@@ -9,20 +9,20 @@ import tempfile
 
 WIN = os.name == 'nt'
 
-def cmd(to_run, bash=False):
+def cmd(to_run, bash=False, doNotReplaceWin=False):
     pieces = shlex.split(to_run)
-    if WIN:
+    if WIN and not doNotReplaceWin:
         for i, piece in enumerate(pieces):
             pieces[i] = piece.replace('./dsq', './dsq.exe').replace('/', '\\')
     elif bash or '|' in pieces:
         pieces = ['bash', '-c', to_run]
 
-    return subprocess.check_output(pieces, stderr=subprocess.STDOUT, cwd=os.getcwd())
+    return subprocess.check_output(pieces, stderr=subprocess.STDOUT , cwd=os.getcwd())
 
 tests = 0
 failures = 0
 
-def test(name, to_run, want, fail=False, sort=False):
+def test(name, to_run, want, fail=False, sort=False, winSkip=False):
     global tests
     global failures
     tests += 1
@@ -30,14 +30,21 @@ def test(name, to_run, want, fail=False, sort=False):
 
     print('STARTING: ' + name)
 
+    if WIN and winSkip:
+      print(f'  SKIPPED\n')
+      return
+
     try:
         got = cmd(to_run).decode()
         if sort:
             got = json.dumps(json.loads(got), sort_keys=True)
             want = json.dumps(json.loads(want), sort_keys=True)
+    except json.JSONDecodeError as e:
+        print('  FAILURE: bad JSON: ' + got)
+        return
     except Exception as e:
         if not fail:
-            print(f'  FAILURE: unexpected failure: ' + (e.output.decode() if isinstance(e, bytes) else str(e)))
+            print(f'  FAILURE: unexpected failure: {0} {1}', str(e), e.output.decode())
             failures += 1
             print()
             return
@@ -212,6 +219,33 @@ want = '[{"a": 1, "b": 2, "c": "[1,2]"}]'
 test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 
 # END OF REGRESSION TESTS
+
+# Cache test
+to_run = """
+./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC"
+"""
+want = """
+[{"AVG(total_amount)":17.641883306799908,"passenger_count":"1","COUNT(*)":1533197},
+{"AVG(total_amount)":18.097587071145647,"passenger_count":"2","COUNT(*)":286461},
+{"AVG(total_amount)":32.23715114825533,"passenger_count":"","COUNT(*)":128020},
+{"AVG(total_amount)":17.915395871092315,"passenger_count":"3","COUNT(*)":72852},
+{"AVG(total_amount)":17.270924817567234,"passenger_count":"5","COUNT(*)":50291},
+{"passenger_count":"0","COUNT(*)":42228,"AVG(total_amount)":17.021401676615067},
+{"passenger_count":"6","COUNT(*)":32623,"AVG(total_amount)":17.600296416636713},
+{"passenger_count":"4","COUNT(*)":25510,"AVG(total_amount)":18.452774990196012},
+{"COUNT(*)":2,"AVG(total_amount)":95.705,"passenger_count":"8"},
+{"passenger_count":"7","COUNT(*)":2,"AVG(total_amount)":87.17},
+{"passenger_count":"9","COUNT(*)":1,"AVG(total_amount)":113.6}]
+"""
+
+cmd("curl https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-04.csv -o taxi.csv", doNotReplaceWin=True)
+test("Caching from file", to_run, want, sort=True)
+
+to_run = """
+cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
+"""
+
+test("Caching from pipe", to_run, want, sort=True, winSkip=True)
 
 print(f"{tests - failures} of {tests} succeeded.")
 if failures > 0:
