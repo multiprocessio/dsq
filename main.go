@@ -351,13 +351,10 @@ func _main() error {
 	pretty := false
 	schema := false
 	sqlFile := ""
-
+	cacheSettings := runner.DefaultCacheSettings
 	args := os.Args[1:]
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
-
-
-	  cacheSettings := runner.DefaultCacheSettings
 
 		if arg == "--verbose" {
 			runner.Verbose = true
@@ -389,7 +386,6 @@ func _main() error {
 			continue
 		}
 
-
 		if arg == "-f" || arg == "--file" {
 
 			hasNext := i+1 < len(args)
@@ -398,10 +394,10 @@ func _main() error {
 			}
 			sqlFile = args[i+1]
 			i++
-    
-       continue
-    }
-    
+
+			continue
+		}
+
 		if arg == "--cache" {
 			cacheSettings.Enabled = true
 			continue
