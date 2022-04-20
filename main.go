@@ -197,8 +197,12 @@ func _main() error {
 	stdin := false
 	pretty := false
 	schema := false
-	sqlFile := false
-	for _, arg := range os.Args[1:] {
+	sqlFile := ""
+
+	args := os.Args[1:]
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+
 		if arg == "--verbose" {
 			runner.Verbose = true
 			continue
@@ -230,7 +234,14 @@ func _main() error {
 		}
 
 		if arg == "-f" || arg == "--file" {
-			sqlFile = true
+
+			hasNext := i+1 < len(args)
+			if !hasNext {
+				return errors.New("Must specify an sql file")
+			}
+			sqlFile = args[i+1]
+			i++
+
 			continue
 		}
 
@@ -252,19 +263,13 @@ func _main() error {
 		}
 	}
 
-	if sqlFile {
-		if len(files) < 2 {
-			return errors.New("Must specify a input file(s) and an sql file")
-		}
-
-		content, err := os.ReadFile(files[0])
+	if sqlFile != "" {
+		content, err := os.ReadFile(sqlFile)
 		if err != nil {
 			return errors.New("Error opening sql file: " + err.Error())
 		}
-		files = files[1:]
 
 		lastNonFlagArg = string(content)
-
 	}
 
 	if len(files) == 0 {
