@@ -45,7 +45,7 @@ func evalFileInto(file, mimetype string, out *os.File) error {
 	}
 
 	if mimetype == "" {
-		return fmt.Errorf("Unknown mimetype for file: %s.", file)
+		return fmt.Errorf("Unknown mimetype for file: %s.\n", file)
 	}
 
 	return runner.TransformFile(file, runner.ContentTypeInfo{
@@ -230,6 +230,7 @@ type args struct {
 	sqlFile       string
 	cacheSettings runner.CacheSettings
 	nonFlagArgs   []string
+	dumpCacheFile bool
 }
 
 func getArgs() (*args, error) {
@@ -287,6 +288,12 @@ func getArgs() (*args, error) {
 		}
 
 		if arg == "--cache" || arg == "-C" {
+			args.cacheSettings.Enabled = true
+			continue
+		}
+
+		if arg == "--cache-file" || arg == "-D" {
+			args.dumpCacheFile = true
 			args.cacheSettings.Enabled = true
 			continue
 		}
@@ -434,6 +441,13 @@ func _main() error {
 		}
 	}
 
+	
+	if args.dumpCacheFile {
+		path, _ := filepath.Abs(getCachedDBPath(projectIdHashOrTmp))
+		fmt.Println(path)
+		return nil
+	}
+
 	// No query, just dump transformed file directly out
 	if lastNonFlagArg == "" {
 		resultFile := ec.GetPanelResultsFile(project.Id, project.Pages[0].Panels[0].Id)
@@ -450,6 +464,7 @@ func _main() error {
 		if err != nil {
 			return err
 		}
+		
 		connector.DatabaseConnectorInfo.Database.Database = path
 	}
 	project.Connectors = append(project.Connectors, *connector)
@@ -475,7 +490,7 @@ func _main() error {
 			if err == nil {
 				rest = ": " + files[nth] + "."
 			}
-			return fmt.Errorf("Input is not an array of objects%s", rest)
+			return fmt.Errorf("Input is not an array of objects%s\n", rest)
 		}
 
 		if e, ok := err.(*runner.DSError); ok && e.Name == "UserError" {
