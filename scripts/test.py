@@ -215,6 +215,18 @@ want = """
 """
 test("Run simple query from sql file", to_run, want, sort=True)
 
+# Error when query file is empty
+to_run = """./dsq  testdata/userdata.json --file ./testdata/sql/empty.sql"""
+want = """
+SQL file is empty
+"""
+test("Run query from empty sql file", to_run, want, fail=True)
+
+# Error when query file is empty
+to_run = """./dsq  testdata/userdata.json -f"""
+want = """Must specify an sql file"""
+test("Not specifying sql file", to_run, want, fail=True)
+
 
 # END OF TESTS
 
