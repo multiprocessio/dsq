@@ -1,1 +1,0 @@
-select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id

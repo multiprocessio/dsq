@@ -207,31 +207,13 @@ test("Prints schema as JSON", to_run, want, sort=True)
 
 # SQL file tests
 # Simple sql query from file
-to_run = """./dsq --file ./testdata/sql/simple.sql testdata/userdata.json"""
+to_run = """./dsq  testdata/userdata.json --file ./testdata/sql/simple.sql"""
 want = """
 [{" Name ":"Michelle Yost"},
 {" Name ":"Guadalupe Schimmel II"},
 {" Name ":"Corey Beier"}]
 """
 test("Run simple query from sql file", to_run, want, sort=True)
-
-# Join sql query from file
-to_run = """./dsq --file ./testdata/sql/join.sql testdata/join/users.csv testdata/join/ages.json"""
-want = """
-[{"name":"Ted","age":88},
-{"name":"Marjory","age":56},
-{"age":33,"name":"Micah"}]
-"""
-test("Run join query from sql file", to_run, want, sort=True)
-
-# Nested sql query from file
-to_run = """./dsq --file ./testdata/sql/nested.sql testdata/nested/nested.json"""
-want="""
-[{"address_number":1002,"city":"Toronto","name":"Agarrah"},
-{"address_number":19,"city":"Mexico City","name":"Minoara"},
-{"address_number":12,"city":"New London","name":"Fontoon"}]
-"""
-test("Run nested query from sql file", to_run, want, sort=True)
 
 
 # END OF TESTS

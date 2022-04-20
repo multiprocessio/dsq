@@ -269,6 +269,10 @@ func _main() error {
 			return errors.New("Error opening sql file: " + err.Error())
 		}
 
+		if string(content) == "" {
+			return errors.New("SQL file is empty")
+		}
+
 		lastNonFlagArg = string(content)
 	}
 
