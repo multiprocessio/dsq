@@ -1,0 +1,1 @@
+SELECT " Name " FROM {} LIMIT 3;
