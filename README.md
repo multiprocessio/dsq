@@ -426,7 +426,7 @@ changing frequently. By turning on the `--cache` or `-C` flag
 DataStation will store the imported data on disk and not delete it
 when the run is over.
 
-With caching on DataStation calculates a SHA1 sum of all the files you
+With caching on, DataStation calculates a SHA1 sum of all the files you
 specified. If the sum ever changes then it will reimport all the
 files. Otherwise when you run additional queries with the cache
 flag on it will reuse that existing database and not reimport the files.
