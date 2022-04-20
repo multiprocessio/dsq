@@ -350,8 +350,12 @@ func _main() error {
 	stdin := false
 	pretty := false
 	schema := false
+	sqlFile := ""
 	cacheSettings := runner.DefaultCacheSettings
-	for _, arg := range os.Args[1:] {
+	args := os.Args[1:]
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+
 		if arg == "--verbose" {
 			runner.Verbose = true
 			continue
@@ -382,6 +386,18 @@ func _main() error {
 			continue
 		}
 
+		if arg == "-f" || arg == "--file" {
+
+			hasNext := i+1 < len(args)
+			if !hasNext {
+				return errors.New("Must specify an sql file")
+			}
+			sqlFile = args[i+1]
+			i++
+
+			continue
+		}
+
 		if arg == "--cache" {
 			cacheSettings.Enabled = true
 			continue
@@ -403,6 +419,19 @@ func _main() error {
 		if strings.Contains(lastNonFlagArg, " ") {
 			files = files[:len(files)-1]
 		}
+	}
+
+	if sqlFile != "" {
+		content, err := os.ReadFile(sqlFile)
+		if err != nil {
+			return errors.New("Error opening sql file: " + err.Error())
+		}
+
+		if string(content) == "" {
+			return errors.New("SQL file is empty")
+		}
+
+		lastNonFlagArg = string(content)
 	}
 
 	if len(files) == 0 {

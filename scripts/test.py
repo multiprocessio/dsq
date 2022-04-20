@@ -211,6 +211,30 @@ want = """{
   }
 }"""
 test("Prints schema as JSON", to_run, want, sort=True)
+
+# SQL file tests
+# Simple sql query from file
+to_run = """./dsq  testdata/userdata.json --file ./testdata/sql/simple.sql"""
+want = """
+[{" Name ":"Michelle Yost"},
+{" Name ":"Guadalupe Schimmel II"},
+{" Name ":"Corey Beier"}]
+"""
+test("Run simple query from sql file", to_run, want, sort=True)
+
+# Error when query file is empty
+to_run = """./dsq  testdata/userdata.json --file ./testdata/sql/empty.sql"""
+want = """
+SQL file is empty
+"""
+test("Run query from empty sql file", to_run, want, fail=True)
+
+# Error when query file is empty
+to_run = """./dsq  testdata/userdata.json -f"""
+want = """Must specify an sql file"""
+test("Not specifying sql file", to_run, want, fail=True)
+
+
 # END OF TESTS
 
 # START OF REGRESSION TESTS
