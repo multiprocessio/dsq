@@ -472,6 +472,7 @@ func _main() error {
 		if err != nil {
 			return err
 		}
+		log.Println(path)
 		connector.DatabaseConnectorInfo.Database.Database = path
 	}
 	project.Connectors = append(project.Connectors, *connector)
