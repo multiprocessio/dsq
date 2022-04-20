@@ -44,6 +44,7 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False, within_secon
 
         got_err = res.stderr.decode()
         if want_stderr and got_err != want_stderr:
+            failures += 1
             print(f'  FAILURE: stderr mismatch. Got "{got_err}", wanted "{want_stderr}"')
             print()
             return

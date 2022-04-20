@@ -192,10 +192,6 @@ func getFilesContentHash(files []string) (string, error) {
 	return hex.EncodeToString(sha1.Sum(nil)), nil
 }
 
-func getCachedDBPath(projectID string) string {
-	return filepath.Join(os.TempDir(), projectID+".db")
-}
-
 func importFile(projectId string, file, mimetype string, ec runner.EvalContext) (*runner.PanelInfo, error) {
 	panelId := uuid.New().String()
 	resultFile := ec.GetPanelResultsFile(projectId, panelId)
@@ -421,11 +417,14 @@ func _main() error {
 	}
 	defer os.RemoveAll(tmpDir)
 
+	// Does no harm in calculating this even if caching is not on. A few places use this path.
+	cachedPath := filepath.Join(os.TempDir(), projectIdHashOrTmp+".db")
 	if args.cacheSettings.Enabled {
-		info, err := os.Stat(getCachedDBPath(projectIdHashOrTmp))
+		info, err := os.Stat(cachedPath)
 		args.cacheSettings.CachePresent = err == nil && info.Size() != 0
 		if !args.cacheSettings.CachePresent {
 			log.Println("Cache invalid, re-import required.")
+			os.Remove(cachedPath)
 		}
 	}
 
@@ -441,10 +440,8 @@ func _main() error {
 		}
 	}
 
-	
 	if args.dumpCacheFile {
-		path, _ := filepath.Abs(getCachedDBPath(projectIdHashOrTmp))
-		fmt.Println(path)
+		fmt.Println(cachedPath)
 		return nil
 	}
 
@@ -460,12 +457,7 @@ func _main() error {
 	}
 
 	if args.cacheSettings.Enabled {
-		path, err := filepath.Abs(getCachedDBPath(projectIdHashOrTmp))
-		if err != nil {
-			return err
-		}
-		
-		connector.DatabaseConnectorInfo.Database.Database = path
+		connector.DatabaseConnectorInfo.Database.Database = cachedPath
 	}
 	project.Connectors = append(project.Connectors, *connector)
 
