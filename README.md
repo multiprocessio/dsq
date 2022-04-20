@@ -30,8 +30,8 @@ $ brew install dsq
 On macOS, Linux, and WSL you can run the following:
 
 ```bash
-$ curl -LO "https://github.com/multiprocessio/dsq/releases/download/0.14.0/dsq-$(uname -s | awk '{ print tolower($0) }')-x64-0.14.0.zip"
-$ unzip dsq-*-0.14.0.zip
+$ curl -LO "https://github.com/multiprocessio/dsq/releases/download/0.15.1/dsq-$(uname -s | awk '{ print tolower($0) }')-x64-0.15.1.zip"
+$ unzip dsq-*-0.15.1.zip
 $ sudo mv dsq /usr/local/bin/dsq
 ```
 
