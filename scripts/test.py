@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import glob
 import json
 import os
 import shlex
@@ -45,7 +46,7 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False, within_secon
         got_err = res.stderr.decode()
         if want_stderr and got_err != want_stderr:
             failures += 1
-            print(f'  FAILURE: stderr mismatch. Got "{got_err}", wanted "{want_stderr}"')
+            print(f'  FAILURE: stderr mismatch. Got "{got_err}", wanted "{want_stderr}".')
             print()
             return
     
@@ -251,13 +252,11 @@ want_stderr = "Must specify a SQL file.\n"
 test("Not specifying sql file", to_run, want="", want_stderr=want_stderr, fail=True)
 
 # Cache test
-try:
-    # Drop the db file on disk to make sure this test's cache is clean.
-    res = cmd("./dsq --cache-file taxi.csv")
-    os.remove(res.stdout.decode().strip())
-except FileNotFoundError:
-    # It's ok if that file doesn't exist. Means it's clean already.
-    pass
+# Drop the db file on disk to make sure this test's cache is clean.
+res = cmd("./dsq --cache-file taxi.csv")
+for f in glob.glob(res.stdout.decode().strip() + "*"):
+    os.remove(f)
+    
 to_run = """
 ./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC"
 """
