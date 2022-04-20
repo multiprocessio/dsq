@@ -419,6 +419,41 @@ Array of
 You can print this as a structured JSON string by omitting the
 `--pretty` flag when setting the `--schema` flag.
 
+### Caching
+
+Sometimes you want to do some exploration on a dataset that isn't
+changing frequently. By turning on the `--cache` or `-C` flag
+DataStation will store the imported data on disk and not delete it
+when the run is over.
+
+With caching on, DataStation calculates a SHA1 sum of all the files you
+specified. If the sum ever changes then it will reimport all the
+files. Otherwise when you run additional queries with the cache
+flag on it will reuse that existing database and not reimport the files.
+
+Since without caching on DataStation uses an in-memory database, the
+initial query with caching on may take slightly longer than with
+caching off. Subsequent queries will be substantially faster though
+(for large datasets).
+
+For example, in the first run with caching on this query might take 30s:
+
+```
+$ dsq some-large-file.json --cache 'SELECT COUNT(1) FROM {}'
+```
+
+But when you run another query it might only take 1s.
+
+```
+$ dsq some-large-file.json --cache 'SELECT SUM(age) FROM {}'
+```
+
+Not because we cache any result but because we cache importing the
+file into SQLite.
+
+So even if you change the query, as long as the file doesn't change,
+the cache is effective.
+
 ## Supported Data Types
 
 | Name | File Extension(s) | Mime Type | Notes |
@@ -446,17 +481,17 @@ kinds of SQL queries on arbitrary (structured) data.
 
 ## Comparisons
 
-| Name | Link | Supported File Types | Engine |
-|----|-|-|------------------------------------------------------------------------|
-| q | http://harelba.github.io/q/ | CSV, TSV | SQLite |
-| textql | https://github.com/dinedal/textql | CSV, TSV | SQLite |
-| octoql | https://github.com/cube2222/octosql | JSON, CSV, Excel, Parquet | Custom engine |
-| dsq | Here | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), Logs | SQLite |
-
-And many other similar tools:
-[sqlite-utils](https://github.com/simonw/sqlite-utils),
-[csvq](https://github.com/mithrandie/csvq),
-[trdsql](https://github.com/noborus/trdsql).
+| Name | Link | Caching | Engine | Supported File Types |
+|-|---|-|-|------------------------------------------------------------------------|
+| dsq | Here | Yes | SQLite | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), Avro, Logs |
+| q | http://harelba.github.io/q/ | Yes | SQLite | CSV, TSV |
+| datafusion-cli | https://github.com/apache/arrow-datafusion | No | Custom engine | CSV, Parquet |
+| textql | https://github.com/dinedal/textql | No | SQLite | CSV, TSV |
+| octoql | https://github.com/cube2222/octosql | No | Custom engine | JSON, CSV, Excel, Parquet |
+| csvq | https://github.com/mithrandie/csvq | No | Custom engine | CSV |
+| sqlite-utils | https://github.com/simonw/sqlite-utils | No | SQLite | CSV, TSV |
+| trdsql | https://github.com/noborus/trdsql | No | SQLite, MySQL or PostgreSQL | Few variations of JSON, TSV, LTSV, TBLN, CSV |
+| spysql | https://github.com/dcmoura/spyql | No | Custom engine | CSV, JSON, TEXT |
 
 ## Third-party integrations
 
