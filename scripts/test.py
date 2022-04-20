@@ -39,6 +39,9 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False):
         if sort:
             got = json.dumps(json.loads(got), sort_keys=True)
             want = json.dumps(json.loads(want), sort_keys=True)
+    except json.JSONDecodeError as e:
+        print('  FAILURE: bad JSON: ' + got)
+        return
     except Exception as e:
         if not fail:
             print(f'  FAILURE: unexpected failure: {0} {1}', str(e), e.output.decode())
