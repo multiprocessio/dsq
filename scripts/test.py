@@ -171,6 +171,11 @@ to_run = """./dsq ./testdata/avro/test_data.avro 'SELECT COUNT(*) FROM {} WHERE 
 want = '[{"COUNT(*)":25}]'
 test("Supports Avro files", to_run, want, sort=True)
 
+# Version test
+to_run = """./dsq -v"""
+want_stderr = "dsq latest\n"
+test("Shows version and quits", to_run, want="", want_stderr=want_stderr)
+
 # Pretty column order
 to_run = """./dsq --pretty testdata/path/path.json 'SELECT name, id FROM {"data.data"}'"""
 want = """+----+-------+

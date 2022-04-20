@@ -337,6 +337,11 @@ func _main() error {
 		return err
 	}
 
+	// Some commands exit naturally here. Like -h and -v
+	if args == nil {
+		return nil
+	}
+
 	lastNonFlagArg := ""
 	files := args.nonFlagArgs
 
