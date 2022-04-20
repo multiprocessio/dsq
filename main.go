@@ -491,6 +491,7 @@ func _main() error {
 
 	err = ec.EvalDatabasePanel(project, 0, panel, nil, *cacheSettings)
 	if err != nil {
+		log.Println(connector.DatabaseConnectorInfo.Database.Database)
 		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
 			rest := "."
 			nth, err := strconv.Atoi(e.TargetPanelId)
