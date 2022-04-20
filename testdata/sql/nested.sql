@@ -1,0 +1,1 @@
+select name, "location.city" city, "location.address.number" address_number from {}
