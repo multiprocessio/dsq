@@ -42,11 +42,6 @@ jobs:
       - run: ./scripts/ci/prepare_windows.ps1
         shell: pwsh
       - run: go build -trimpath -buildmode=pie -mod=readonly -modcacherw
-      # if you call os.TempDir() that path would be \blabla\Runner~1\blabla the ~ will break some apps.
-      - run: |
-          echo "TEMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
-          echo "TMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
-        shell: pwsh
       - run: ./scripts/test.py
         shell: bash
 
