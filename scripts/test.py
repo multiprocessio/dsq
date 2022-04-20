@@ -6,6 +6,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+from datetime import datetime
 
 WIN = os.name == 'nt'
 
@@ -22,11 +23,13 @@ def cmd(to_run, bash=False, doNotReplaceWin=False):
 tests = 0
 failures = 0
 
-def test(name, to_run, want, fail=False, sort=False, winSkip=False):
+def test(name, to_run, want, fail=False, sort=False, winSkip=False, within_seconds=None):
     global tests
     global failures
     tests += 1
     skipped = True
+
+    t1 = datetime.now()
 
     print('STARTING: ' + name)
 
@@ -40,6 +43,7 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False):
             got = json.dumps(json.loads(got), sort_keys=True)
             want = json.dumps(json.loads(want), sort_keys=True)
     except json.JSONDecodeError as e:
+        failures += 1
         print('  FAILURE: bad JSON: ' + got)
         return
     except Exception as e:
@@ -72,6 +76,13 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False):
             print(e.cmd, e.output.decode())
         failures += 1
         print()
+        return
+
+    t2 = datetime.now()
+    s = (t2-t1).seconds
+    if within_seconds and s > within_seconds:
+        printf(f'  FAILURE: completed in {s} seconds. Wanted <{within_seconds}s')
+        failures += 1
         return
 
     print(f'  SUCCESS\n')
@@ -224,25 +235,13 @@ test("Run simple query from sql file", to_run, want, sort=True)
 
 # Error when query file is empty
 to_run = """./dsq  testdata/userdata.json --file ./testdata/sql/empty.sql"""
-want = """
-SQL file is empty
-"""
+want = "SQL file is empty."
 test("Run query from empty sql file", to_run, want, fail=True)
 
 # Error when query file is empty
 to_run = """./dsq  testdata/userdata.json -f"""
-want = """Must specify an sql file"""
+want = """Must specify a SQL file."""
 test("Not specifying sql file", to_run, want, fail=True)
-
-
-# END OF TESTS
-
-# START OF REGRESSION TESTS
-to_run = """./dsq ./testdata/regr/36.json 'SELECT * FROM {}'"""
-want = '[{"a": 1, "b": 2, "c": "[1,2]"}]'
-test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
-
-# END OF REGRESSION TESTS
 
 # Cache test
 to_run = """
@@ -269,7 +268,35 @@ to_run = """
 cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
 """
 
-test("Caching from pipe", to_run, want, sort=True, winSkip=True)
+test("Caching from pipe", to_run, want, sort=True, winSkip=True, within_seconds=5)
+
+# Truncate to first 10 lines to test cache busting
+with open('taxi.csv') as t:
+    lines = []
+    for line in t:
+        lines.append(line)
+        if len(lines) > 10:
+            break
+
+with open('taxi.csv', 'w') as f:
+    f.write(''.join(lines))
+
+to_run = """
+cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
+"""
+want = """[{"COUNT(*)":9,"AVG(total_amount)":20.571111111111115,"passenger_count":"1"},
+{"passenger_count":"0","COUNT(*)":1,"AVG(total_amount)":43.67}]"""
+
+test("Re-imports when file changes", to_run, want, sort=True, winSkip=True)
+
+# END OF TESTS
+
+# START OF REGRESSION TESTS
+to_run = """./dsq ./testdata/regr/36.json 'SELECT * FROM {}'"""
+want = '[{"a": 1, "b": 2, "c": "[1,2]"}]'
+test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
+
+# END OF REGRESSION TESTS
 
 print(f"{tests - failures} of {tests} succeeded.")
 if failures > 0:
