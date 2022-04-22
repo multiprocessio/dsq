@@ -224,6 +224,7 @@ type args struct {
 	pretty        bool
 	schema        bool
 	sqlFile       string
+	indexColumns bool
 	cacheSettings runner.CacheSettings
 	nonFlagArgs   []string
 	dumpCacheFile bool
@@ -239,6 +240,10 @@ func getArgs() (*args, error) {
 		if arg == "--verbose" {
 			runner.Verbose = true
 			continue
+		}
+
+		if arg == "--index" || arg == "-I" {
+			args.indexColumns = true
 		}
 
 		if arg == "-s" || arg == "--stdin" {
@@ -423,7 +428,11 @@ func _main() error {
 	defer os.RemoveAll(tmpDir)
 
 	// Does no harm in calculating this even if caching is not on. A few places use this path.
-	cachedPath := filepath.Join(os.TempDir(), "dsq-cache-"+projectIdHashOrTmp+".db")
+	indexSuffix := ""
+	if args.indexColumns {
+		indexSuffix = "-index"
+	}
+	cachedPath := filepath.Join(os.TempDir(), "dsq-cache-"+projectIdHashOrTmp+indexSuffix+".db")
 	if args.cacheSettings.Enabled {
 		info, err := os.Stat(cachedPath)
 		args.cacheSettings.CachePresent = err == nil && info.Size() != 0
@@ -479,7 +488,7 @@ func _main() error {
 		},
 	}
 
-	err = ec.EvalDatabasePanel(project, 0, panel, nil, args.cacheSettings)
+	err = ec.EvalDatabasePanel(project, 0, panel, nil, args.cacheSettings, args.indexColumns)
 	if err != nil {
 		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
 			rest := "."
