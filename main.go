@@ -244,6 +244,7 @@ func getArgs() (*args, error) {
 
 		if arg == "--index" || arg == "-I" {
 			args.indexColumns = true
+			continue
 		}
 
 		if arg == "-s" || arg == "--stdin" {
