@@ -224,7 +224,7 @@ type args struct {
 	pretty        bool
 	schema        bool
 	sqlFile       string
-	indexColumns bool
+	indexColumns  bool
 	cacheSettings runner.CacheSettings
 	nonFlagArgs   []string
 	dumpCacheFile bool
