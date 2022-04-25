@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -219,6 +220,57 @@ func importFile(projectId string, file, mimetype string, ec runner.EvalContext) 
 	}, nil
 }
 
+func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
+	query := rewriteQuery(queryRaw)
+	panel := &runner.PanelInfo{
+		Type:    runner.DatabasePanel,
+		Content: query,
+		Id:      uuid.New().String(),
+		Name:    uuid.New().String(),
+		DatabasePanelInfo: &runner.DatabasePanelInfo{
+			Database: runner.DatabasePanelInfoDatabase{
+				ConnectorId: project.Connectors[0].Id,
+			},
+		},
+	}
+
+	err := ec.EvalDatabasePanel(project, 0, panel, nil, args.cacheSettings)
+	if err != nil {
+		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
+			rest := "."
+			nth, err := strconv.Atoi(e.TargetPanelId)
+			if err == nil {
+				rest = ": " + files[nth] + "."
+			}
+			return fmt.Errorf("Input is not an array of objects%s\n", rest)
+		}
+	}
+
+	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
+	return dumpJSONFile(resultFile, args.pretty, args.schema)
+}
+
+func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
+
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Printf("dsq> ")
+		queryRaw, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		if queryRaw == "exit\n" || queryRaw == "EOF\n" {
+			return err
+		}
+
+		err = runQuery(queryRaw, project, ec, args, files)
+
+		if err != nil {
+			return err
+		}
+	}
+}
+
 type args struct {
 	pipedMimetype string
 	pretty        bool
@@ -227,6 +279,7 @@ type args struct {
 	cacheSettings runner.CacheSettings
 	nonFlagArgs   []string
 	dumpCacheFile bool
+	isInteractive bool
 }
 
 func getArgs() (*args, error) {
@@ -290,6 +343,13 @@ func getArgs() (*args, error) {
 
 		if arg == "--cache-file" || arg == "-D" {
 			args.dumpCacheFile = true
+			args.cacheSettings.Enabled = true
+			continue
+		}
+
+		if arg == "--interactive" || arg == "-i" {
+			args.isInteractive = true
+			args.pretty = true
 			args.cacheSettings.Enabled = true
 			continue
 		}
@@ -451,7 +511,7 @@ func _main() error {
 	}
 
 	// No query, just dump transformed file directly out
-	if lastNonFlagArg == "" {
+	if lastNonFlagArg == "" && !args.isInteractive {
 		resultFile := ec.GetPanelResultsFile(project.Id, project.Pages[0].Panels[0].Id)
 		return dumpJSONFile(resultFile, args.pretty, args.schema)
 	}
@@ -466,41 +526,11 @@ func _main() error {
 	}
 	project.Connectors = append(project.Connectors, *connector)
 
-	query := rewriteQuery(lastNonFlagArg)
-	panel := &runner.PanelInfo{
-		Type:    runner.DatabasePanel,
-		Content: query,
-		Id:      uuid.New().String(),
-		Name:    uuid.New().String(),
-		DatabasePanelInfo: &runner.DatabasePanelInfo{
-			Database: runner.DatabasePanelInfoDatabase{
-				ConnectorId: connector.Id,
-			},
-		},
+	if args.isInteractive {
+		return repl(project, &ec, args, files)
 	}
 
-	err = ec.EvalDatabasePanel(project, 0, panel, nil, args.cacheSettings)
-	if err != nil {
-		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
-			rest := "."
-			nth, err := strconv.Atoi(e.TargetPanelId)
-			if err == nil {
-				rest = ": " + files[nth] + "."
-			}
-			return fmt.Errorf("Input is not an array of objects%s\n", rest)
-		}
-
-		if e, ok := err.(*runner.DSError); ok && e.Name == "UserError" {
-			if e.Message[len(e.Message)-1] != '.' {
-				e.Message += "."
-			}
-			return errors.New(e.Message)
-		}
-		return err
-	}
-
-	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
-	return dumpJSONFile(resultFile, args.pretty, args.schema)
+	return runQuery(lastNonFlagArg, project, &ec, args, files)
 }
 
 func main() {
