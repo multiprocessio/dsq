@@ -35,6 +35,7 @@ require (
 	github.com/aws/smithy-go v1.9.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/chzyer/readline v1.5.0 // indirect
 	github.com/deepmap/oapi-codegen v1.8.2 // indirect
 	github.com/denisenkom/go-mssqldb v0.12.0 // indirect
 	github.com/elastic/go-elasticsearch/v6 v6.8.10 // indirect

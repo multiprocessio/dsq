@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -18,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/chzyer/readline"
 	"github.com/multiprocessio/datastation/runner"
 
 	"github.com/google/uuid"
@@ -252,10 +252,51 @@ func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalCont
 
 func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
 
-	reader := bufio.NewReader(os.Stdin)
+	tempfile, err := ioutil.TempFile("", "dsq-hist")
+	if err != nil {
+		return err
+	}
+
+	completer := readline.NewPrefixCompleter(
+		readline.PcItem("SELECT"),
+		readline.PcItem("FROM"),
+		readline.PcItem("WHERE"),
+		readline.PcItem("AND"),
+		readline.PcItem("OR"),
+		readline.PcItem("IN"),
+		readline.PcItem("JOIN"),
+	)
+
+	filterInput := func(r rune) (rune, bool) {
+		switch r {
+		// block CtrlZ feature
+		case readline.CharCtrlZ:
+			return r, false
+		}
+		return r, true
+	}
+
+	defer os.Remove(tempfile.Name())
+
+	l, err := readline.NewEx(&readline.Config{
+		Prompt:              "dsq> ",
+		HistoryFile:         tempfile.Name(),
+		InterruptPrompt:     "^D",
+		EOFPrompt:           "exit",
+		HistorySearchFold:   true,
+		FuncFilterInputRune: filterInput,
+		AutoComplete:        completer,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	defer l.Close()
+
 	for {
-		fmt.Printf("dsq> ")
-		queryRaw, err := reader.ReadString('\n')
+
+		queryRaw, err := l.Readline()
 		if err != nil {
 			return err
 		}
