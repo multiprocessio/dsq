@@ -297,11 +297,15 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 	for {
 
 		queryRaw, err := l.Readline()
+
 		if err != nil {
 			return err
 		}
-		if queryRaw == "exit\n" || queryRaw == "EOF\n" {
-			return err
+
+		if queryRaw == "exit" {
+			// prints bye like mysql
+			fmt.Println("bye")
+			return nil
 		}
 
 		err = runQuery(queryRaw, project, ec, args, files)
