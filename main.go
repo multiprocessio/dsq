@@ -50,9 +50,18 @@ func evalFileInto(file, mimetype string, out *os.File) error {
 		return fmt.Errorf("Unknown mimetype for file: %s.\n", file)
 	}
 
+	parallelEncoding := false
+	stat, err := os.Stat(file)
+	if err != nil {
+		return err
+	}
+	if stat.Size() > runner.ParallelEncodingMin {
+		parallelEncoding = true
+	}
+
 	return runner.TransformFile(file, runner.ContentTypeInfo{
 		Type: mimetype,
-	}, out)
+	}, out, parallelEncoding)
 }
 
 func getShape(resultFile, panelId string) (*runner.Shape, error) {
