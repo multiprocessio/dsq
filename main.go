@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/chzyer/readline"
 	"github.com/multiprocessio/datastation/runner"
 
 	"github.com/google/uuid"
@@ -219,6 +220,107 @@ func importFile(projectId string, file, mimetype string, ec runner.EvalContext) 
 	}, nil
 }
 
+func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
+	query := rewriteQuery(queryRaw)
+	panel := &runner.PanelInfo{
+		Type:    runner.DatabasePanel,
+		Content: query,
+		Id:      uuid.New().String(),
+		Name:    uuid.New().String(),
+		DatabasePanelInfo: &runner.DatabasePanelInfo{
+			Database: runner.DatabasePanelInfoDatabase{
+				ConnectorId: project.Connectors[0].Id,
+			},
+		},
+	}
+
+	err := ec.EvalDatabasePanel(project, 0, panel, nil, args.cacheSettings)
+	if err != nil {
+		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
+			rest := "."
+			nth, err := strconv.Atoi(e.TargetPanelId)
+			if err == nil {
+				rest = ": " + files[nth] + "."
+			}
+			return fmt.Errorf("Input is not an array of objects%s\n", rest)
+		}
+	}
+
+	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
+	return dumpJSONFile(resultFile, args.pretty, args.schema)
+}
+
+func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
+
+	tempfile, err := ioutil.TempFile("", "dsq-hist")
+	if err != nil {
+		return err
+	}
+
+	completer := readline.NewPrefixCompleter(
+		readline.PcItem("SELECT"),
+		readline.PcItem("FROM"),
+		readline.PcItem("WHERE"),
+		readline.PcItem("AND"),
+		readline.PcItem("OR"),
+		readline.PcItem("IN"),
+		readline.PcItem("JOIN"),
+	)
+
+	filterInput := func(r rune) (rune, bool) {
+		switch r {
+		// block CtrlZ feature
+		case readline.CharCtrlZ:
+			return r, false
+		}
+		return r, true
+	}
+
+	defer os.Remove(tempfile.Name())
+
+	l, err := readline.NewEx(&readline.Config{
+		Prompt:              "dsq> ",
+		HistoryFile:         tempfile.Name(),
+		InterruptPrompt:     "^D",
+		EOFPrompt:           "exit",
+		HistorySearchFold:   true,
+		FuncFilterInputRune: filterInput,
+		AutoComplete:        completer,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	defer l.Close()
+
+	for {
+
+		queryRaw, err := l.Readline()
+
+		if err != nil {
+			return err
+		}
+
+		queryRaw = strings.TrimSpace(queryRaw)
+
+		if queryRaw == "" {
+			continue
+		}
+
+		if queryRaw == "exit" {
+			// prints bye like mysql
+			fmt.Println("bye")
+			return nil
+		}
+		err = runQuery(queryRaw, project, ec, args, files)
+
+		if err != nil {
+			return err
+		}
+	}
+}
+
 type args struct {
 	pipedMimetype string
 	pretty        bool
@@ -227,6 +329,7 @@ type args struct {
 	cacheSettings runner.CacheSettings
 	nonFlagArgs   []string
 	dumpCacheFile bool
+	isInteractive bool
 }
 
 func getArgs() (*args, error) {
@@ -290,6 +393,13 @@ func getArgs() (*args, error) {
 
 		if arg == "--cache-file" || arg == "-D" {
 			args.dumpCacheFile = true
+			args.cacheSettings.Enabled = true
+			continue
+		}
+
+		if arg == "--interactive" || arg == "-i" {
+			args.isInteractive = true
+			args.pretty = true
 			args.cacheSettings.Enabled = true
 			continue
 		}
@@ -451,7 +561,7 @@ func _main() error {
 	}
 
 	// No query, just dump transformed file directly out
-	if lastNonFlagArg == "" {
+	if lastNonFlagArg == "" && !args.isInteractive {
 		resultFile := ec.GetPanelResultsFile(project.Id, project.Pages[0].Panels[0].Id)
 		return dumpJSONFile(resultFile, args.pretty, args.schema)
 	}
@@ -466,41 +576,11 @@ func _main() error {
 	}
 	project.Connectors = append(project.Connectors, *connector)
 
-	query := rewriteQuery(lastNonFlagArg)
-	panel := &runner.PanelInfo{
-		Type:    runner.DatabasePanel,
-		Content: query,
-		Id:      uuid.New().String(),
-		Name:    uuid.New().String(),
-		DatabasePanelInfo: &runner.DatabasePanelInfo{
-			Database: runner.DatabasePanelInfoDatabase{
-				ConnectorId: connector.Id,
-			},
-		},
+	if args.isInteractive {
+		return repl(project, &ec, args, files)
 	}
 
-	err = ec.EvalDatabasePanel(project, 0, panel, nil, args.cacheSettings)
-	if err != nil {
-		if e, ok := err.(*runner.DSError); ok && e.Name == "NotAnArrayOfObjectsError" {
-			rest := "."
-			nth, err := strconv.Atoi(e.TargetPanelId)
-			if err == nil {
-				rest = ": " + files[nth] + "."
-			}
-			return fmt.Errorf("Input is not an array of objects%s\n", rest)
-		}
-
-		if e, ok := err.(*runner.DSError); ok && e.Name == "UserError" {
-			if e.Message[len(e.Message)-1] != '.' {
-				e.Message += "."
-			}
-			return errors.New(e.Message)
-		}
-		return err
-	}
-
-	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
-	return dumpJSONFile(resultFile, args.pretty, args.schema)
+	return runQuery(lastNonFlagArg, project, &ec, args, files)
 }
 
 func main() {
