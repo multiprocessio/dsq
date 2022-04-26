@@ -302,12 +302,17 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 			return err
 		}
 
+		queryRaw = strings.TrimSpace(queryRaw)
+
+		if queryRaw == "" {
+			continue
+		}
+
 		if queryRaw == "exit" {
 			// prints bye like mysql
 			fmt.Println("bye")
 			return nil
 		}
-
 		err = runQuery(queryRaw, project, ec, args, files)
 
 		if err != nil {
