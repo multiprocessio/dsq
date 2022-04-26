@@ -251,11 +251,12 @@ func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalCont
 }
 
 func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
-
 	tempfile, err := ioutil.TempFile("", "dsq-hist")
 	if err != nil {
 		return err
 	}
+
+	defer os.Remove(tempfile.Name())
 
 	completer := readline.NewPrefixCompleter(
 		readline.PcItem("SELECT"),
@@ -276,8 +277,6 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 		return r, true
 	}
 
-	defer os.Remove(tempfile.Name())
-
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:              "dsq> ",
 		HistoryFile:         tempfile.Name(),
@@ -287,7 +286,6 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 		FuncFilterInputRune: filterInput,
 		AutoComplete:        completer,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -295,15 +293,12 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 	defer l.Close()
 
 	for {
-
 		queryRaw, err := l.Readline()
-
 		if err != nil {
 			return err
 		}
 
 		queryRaw = strings.TrimSpace(queryRaw)
-
 		if queryRaw == "" {
 			continue
 		}
@@ -313,8 +308,8 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 			fmt.Println("bye")
 			return nil
 		}
-		err = runQuery(queryRaw, project, ec, args, files)
 
+		err = runQuery(queryRaw, project, ec, args, files)
 		if err != nil {
 			return err
 		}
