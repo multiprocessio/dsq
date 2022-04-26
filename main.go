@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -97,6 +98,12 @@ func dumpJSONFile(file string, pretty bool, schema bool) error {
 	}
 	defer fd.Close()
 
+	size := int64(-1)
+	fi, err := fd.Stat()
+	if err == nil {
+		size = fi.Size()
+	}
+
 	if schema {
 		s, err := runner.ShapeFromFile(file, "doesn't-matter", runner.DefaultShapeMaxBytesToRead, 100)
 		if err != nil {
@@ -124,48 +131,57 @@ func dumpJSONFile(file string, pretty bool, schema bool) error {
 		return nil
 	}
 
-	s, err := runner.ShapeFromFile(file, "doesn't-matter", runner.DefaultShapeMaxBytesToRead, 100)
-	if err != nil {
-		return err
-	}
-	var columns []string
-	for name := range s.ArrayShape.Children.ObjectShape.Children {
-		columns = append(columns, name)
-	}
-	sort.Strings(columns)
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(columns)
-	table.SetAutoFormatHeaders(false)
-
-	dec := json.NewDecoder(fd)
 	var rows []map[string]interface{}
-	err = dec.Decode(&rows)
-	if err != nil {
-		return err
-	}
-
-	for _, objRow := range rows {
-		var row []string
-		for _, column := range columns {
-			var cell string
-			switch t := objRow[column].(type) {
-			case bool, byte, complex64, complex128, error, float32, float64,
-				int, int8, int16, int32, int64,
-				uint, uint16, uint32, uint64, uintptr:
-				cell = fmt.Sprintf("%#v", t)
-			case string:
-				cell = t
-			default:
-				cellBytes, _ := json.Marshal(t)
-				cell = string(cellBytes)
-			}
-			row = append(row, cell)
+	if size != 0 {
+		s, err := runner.ShapeFromFile(file, "doesn't-matter", runner.DefaultShapeMaxBytesToRead, 100)
+		if err != nil {
+			return err
 		}
-		table.Append(row)
+		var columns []string
+		for name := range s.ArrayShape.Children.ObjectShape.Children {
+			columns = append(columns, name)
+		}
+		sort.Strings(columns)
+
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader(columns)
+		table.SetAutoFormatHeaders(false)
+
+		dec := json.NewDecoder(fd)
+		err = dec.Decode(&rows)
+		if err != nil {
+			return err
+		}
+
+		for _, objRow := range rows {
+			var row []string
+			for _, column := range columns {
+				var cell string
+				switch t := objRow[column].(type) {
+				case bool, byte, complex64, complex128, error, float32, float64,
+					int, int8, int16, int32, int64,
+					uint, uint16, uint32, uint64, uintptr:
+					cell = fmt.Sprintf("%#v", t)
+				case string:
+					cell = t
+				default:
+					cellBytes, _ := json.Marshal(t)
+					cell = string(cellBytes)
+				}
+				row = append(row, cell)
+			}
+			table.Append(row)
+		}
+
+		table.Render()
 	}
 
-	table.Render()
+	if len(rows) == 1 {
+		fmt.Println("(1 row)")
+	} else {
+		fmt.Printf("(%d rows)\n", len(rows))
+	}
+
 	return nil
 }
 
@@ -251,13 +267,6 @@ func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalCont
 }
 
 func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
-	tempfile, err := ioutil.TempFile("", "dsq-hist")
-	if err != nil {
-		return err
-	}
-
-	defer os.Remove(tempfile.Name())
-
 	completer := readline.NewPrefixCompleter(
 		readline.PcItem("SELECT"),
 		readline.PcItem("FROM"),
@@ -277,9 +286,10 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 		return r, true
 	}
 
+	historyFile := path.Join(runner.HOME, "dsq_history")
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:              "dsq> ",
-		HistoryFile:         tempfile.Name(),
+		HistoryFile:         historyFile,
 		InterruptPrompt:     "^D",
 		EOFPrompt:           "exit",
 		HistorySearchFold:   true,

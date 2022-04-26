@@ -454,6 +454,11 @@ file into SQLite.
 So even if you change the query, as long as the file doesn't change,
 the cache is effective.
 
+### Interactive REPL
+
+Use the `-i` or `--interactive` flag to enter an interactive REPL
+where you can run multiple SQL queries.
+
 ## Supported Data Types
 
 | Name | File Extension(s) | Mime Type | Notes |
