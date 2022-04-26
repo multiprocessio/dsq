@@ -459,6 +459,19 @@ the cache is effective.
 Use the `-i` or `--interactive` flag to enter an interactive REPL
 where you can run multiple SQL queries.
 
+```
+$ dsq some-large-file.json -i
+dsq> SELECT COUNT(1) FROM {};
++----------+
+| COUNT(1) |
++----------+
+|     1000 |
++----------+
+(1 row)
+dsq> SELECT * FROM {} WHERE NAME = 'Kevin';
+(0 rows)
+```
+
 ## Supported Data Types
 
 | Name | File Extension(s) | Mime Type | Notes |
