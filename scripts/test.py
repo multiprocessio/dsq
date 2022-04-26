@@ -183,7 +183,8 @@ want = """+----+-------+
 +----+-------+
 |  1 | Corah |
 |  3 | Minh  |
-+----+-------+"""
++----+-------+
+(2 rows)"""
 test("Pretty column order alphabetical", to_run, want)
 
 # Pretty without query
@@ -192,7 +193,8 @@ want = """+---+---+-------+
 | a | b |   c   |
 +---+---+-------+
 | 1 | 2 | [1,2] |
-+---+---+-------+"""
++---+---+-------+
+(1 row)"""
 test("Pretty works even without query", to_run, want)
 
 # Prints schema pretty
