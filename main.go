@@ -260,6 +260,8 @@ func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalCont
 			}
 			return fmt.Errorf("Input is not an array of objects%s\n", rest)
 		}
+		
+		return err
 	}
 
 	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)
