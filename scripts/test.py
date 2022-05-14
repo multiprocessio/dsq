@@ -265,7 +265,7 @@ for f in glob.glob(os.path.join(tempfile.gettempdir(), "dsq-cache-*.db*")):
     os.remove(f)
     
 to_run = """
-./dsq --cache testdata/taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC"
+./dsq --cache taxi.csv "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC"
 """
 want = """
 [{"AVG(total_amount)":17.641883306799908,"passenger_count":"1","COUNT(*)":1533197},
@@ -284,7 +284,7 @@ want_stderr = "Cache invalid, re-import required.\n"
 test("Caching from file (first time so import is required)", to_run, want, want_stderr=want_stderr, sort=True)
 
 to_run = """
-cat testdata/taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
+cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
 """
 
 test("Caching from pipe (second time so import not required)", to_run, want, sort=True, winSkip=True, within_seconds=5)
