@@ -281,7 +281,6 @@ want = """
 {"passenger_count":"9","COUNT(*)":1,"AVG(total_amount)":113.6}]"""
 want_stderr = "Cache invalid, re-import required.\n"
 
-cmd("curl https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2021-04.csv -o taxi.csv", doNotReplaceWin=True)
 test("Caching from file (first time so import is required)", to_run, want, want_stderr=want_stderr, sort=True)
 
 to_run = """
@@ -290,24 +289,18 @@ cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total
 
 test("Caching from pipe (second time so import not required)", to_run, want, sort=True, winSkip=True, within_seconds=5)
 
-# Truncate to first 10 lines to test cache busting
-with open('taxi.csv') as t:
-    lines = []
-    for line in t:
-        lines.append(line)
-        if len(lines) > 10:
-            break
-
-with open('taxi.csv', 'w') as f:
-    f.write(''.join(lines))
-
 to_run = """
-cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'"""
+cat testdata/taxi_trunc.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'"""
 want = """[{"COUNT(*)":9,"AVG(total_amount)":20.571111111111115,"passenger_count":"1"},
 {"passenger_count":"0","COUNT(*)":1,"AVG(total_amount)":43.67}]"""
 want_stderr = "Cache invalid, re-import required.\n"
 
 test("Re-imports when file changes with cache on", to_run, want, want_stderr=want_stderr, sort=True, winSkip=True)
+
+# Mode support
+to_run = """./dsq testdata/userdata.json 'SELECT mode(Activated) mostly_activated FROM {}' """
+want = '[{"mostly_activated":1}]'
+test("Mode support", to_run, want=want)
 
 # END OF TESTS
 
