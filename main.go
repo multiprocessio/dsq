@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -50,9 +51,12 @@ func evalFileInto(file, mimetype string, out *os.File) error {
 		return fmt.Errorf("Unknown mimetype for file: %s.\n", file)
 	}
 
+	w := bufio.NewWriterSize(out, 1e6)
+	defer w.Flush()
+
 	return runner.TransformFile(file, runner.ContentTypeInfo{
 		Type: mimetype,
-	}, out)
+	}, w)
 }
 
 func getShape(resultFile, panelId string) (*runner.Shape, error) {
@@ -260,6 +264,8 @@ func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalCont
 			}
 			return fmt.Errorf("Input is not an array of objects%s\n", rest)
 		}
+
+		return err
 	}
 
 	resultFile := ec.GetPanelResultsFile(project.Id, panel.Id)

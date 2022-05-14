@@ -6,8 +6,9 @@ go 1.18
 // replace github.com/multiprocessio/datastation/runner => ../datastation/runner
 
 require (
+	github.com/chzyer/readline v1.5.0
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220420211013-6135c59970ef
+	github.com/multiprocessio/datastation/runner v0.0.0-20220514140833-05821ae05f52
 	github.com/olekukonko/tablewriter v0.0.5
 )
 
@@ -35,10 +36,8 @@ require (
 	github.com/aws/smithy-go v1.9.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/chzyer/readline v1.5.0 // indirect
 	github.com/deepmap/oapi-codegen v1.8.2 // indirect
 	github.com/denisenkom/go-mssqldb v0.12.0 // indirect
-	github.com/elastic/go-elasticsearch/v6 v6.8.10 // indirect
 	github.com/flosch/pongo2 v0.0.0-20200913210552-0d938eb266f3 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/gabriel-vasile/mimetype v1.4.0 // indirect
@@ -66,13 +65,14 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0 // indirect
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
-	github.com/mattn/go-sqlite3 v1.14.12 // indirect
+	github.com/mattn/go-sqlite3 v1.14.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/multiprocessio/go-json v0.0.0-20220308002443-61d497dd7b9e // indirect
 	github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956 // indirect
+	github.com/multiprocessio/go-sqlite3-stdlib v0.0.0-20220513170836-f1c26f349467 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.2 // indirect
 	github.com/paulmach/orb v0.4.0 // indirect
