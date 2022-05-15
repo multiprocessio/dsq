@@ -302,6 +302,11 @@ to_run = """./dsq testdata/userdata.json 'SELECT mode(Activated) mostly_activate
 want = '[{"mostly_activated":1}]'
 test("Mode support", to_run, want=want)
 
+# URL functions
+to_run = """./dsq testdata/basic_logs.csv 'SELECT url_host(request) host, count(1) count FROM {} group by host' """
+want = '[{"host":"age.com","count":2}]'
+test("URL functions", to_run, want=want)
+
 # END OF TESTS
 
 # START OF REGRESSION TESTS
