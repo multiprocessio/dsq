@@ -351,6 +351,15 @@ $ dsq user_addresses.json "SELECT * FROM {} WHERE name REGEXP 'A.*'"
 [{"location.address.number":1002,"location.city":"Toronto","name":"Agarrah"}]
 ```
 
+### Standard Library
+
+dsq registers
+[go-sqlite3-stdlib](https://github.com/multiprocessio/go-sqlite3-stdlib)
+so you get access to numerous statistics, url, math, string, and
+regexp functions that aren't part of the SQLite base.
+
+View that project docs for all available extended functions.
+
 ### Output column order
 
 When emitting JSON (i.e. without the `--pretty` flag) keys within an
