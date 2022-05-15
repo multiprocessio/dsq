@@ -1,0 +1,3 @@
+name,age,request
+phil,12,https://age.com/flubber.html?k=123
+buddy,19,https://age.com/path.html?k=199
