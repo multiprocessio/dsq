@@ -10,7 +10,7 @@ replace github.com/mattn/go-sqlite3 v1.14.13 => github.com/multiprocessio/go-sql
 require (
 	github.com/chzyer/readline v1.5.0
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220515135312-4353b40df35b
+	github.com/multiprocessio/datastation/runner v0.0.0-20220520232059-1f3a63ad0fc4
 	github.com/olekukonko/tablewriter v0.0.5
 )
 
@@ -75,7 +75,7 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/multiprocessio/go-json v0.0.0-20220308002443-61d497dd7b9e // indirect
 	github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956 // indirect
-	github.com/multiprocessio/go-sqlite3-stdlib v0.0.0-20220515132214-0499e13b82b2 // indirect
+	github.com/multiprocessio/go-sqlite3-stdlib v0.0.0-20220520203101-c3fc58eca0a1 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.2 // indirect
 	github.com/paulmach/orb v0.5.0 // indirect
@@ -102,7 +102,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel v1.7.0 // indirect
 	go.opentelemetry.io/otel/trace v1.7.0 // indirect
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
+	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
 	golang.org/x/net v0.0.0-20220407224826-aac1ed45d8e3 // indirect
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a // indirect
 	golang.org/x/sys v0.0.0-20220429233432-b5fbb4746d32 // indirect
