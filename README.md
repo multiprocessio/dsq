@@ -51,8 +51,17 @@ If you are on another platform or architecture or want to grab the
 latest release, you can do so with Go 1.18+:
 
 ```bash
-$ go install github.com/multiprocessio/dsq@latest
+$ git clone https://github.com/multiprocessio/dsq
+$ cd dsq
+$ go install .
+$ sudo mv ~/go/bin/dsq /usr/local/bin/dsq
 ```
+
+NOTE: `go install github.com/multiprocessio/dsq@latest` (i.e. without
+having the source locally to build) will not work until
+https://github.com/mattn/go-sqlite3/pull/1046 is merged because `go
+install` in that form doesn't seem to respect `go.mod` `replace`
+directives.
 
 `dsq` will likely work on other platforms that Go is ported to such as
 AARCH64 and OpenBSD, but tests and builds are only run against x86_64
