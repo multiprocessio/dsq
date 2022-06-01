@@ -2,15 +2,13 @@ module github.com/multiprocessio/dsq
 
 go 1.18
 
-replace github.com/mattn/go-sqlite3 v1.14.13 => github.com/multiprocessio/go-sqlite3 v1.14.14-0.20220513213203-12637a65d5d7
-
 // Uncomment for local development (and re-run `go mod tidy`)
 // replace github.com/multiprocessio/datastation/runner => ../datastation/runner
 
 require (
 	github.com/chzyer/readline v1.5.0
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220520232059-1f3a63ad0fc4
+	github.com/multiprocessio/datastation/runner v0.0.0-20220601032709-9bda16b723bb
 	github.com/olekukonko/tablewriter v0.0.5
 )
 
@@ -68,14 +66,14 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0 // indirect
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.10 // indirect
-	github.com/mattn/go-sqlite3 v1.14.13 // indirect
+	github.com/mattn/go-sqlite3 v1.14.14-0.20220530010643-3ccccfb4c9c6 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/multiprocessio/go-json v0.0.0-20220308002443-61d497dd7b9e // indirect
 	github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956 // indirect
-	github.com/multiprocessio/go-sqlite3-stdlib v0.0.0-20220520203101-c3fc58eca0a1 // indirect
+	github.com/multiprocessio/go-sqlite3-stdlib v0.0.0-20220601025455-7a933dfc26ed // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/neo4j/neo4j-go-driver/v4 v4.4.2 // indirect
 	github.com/paulmach/orb v0.5.0 // indirect
