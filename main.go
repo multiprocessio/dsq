@@ -55,8 +55,9 @@ func evalFileInto(file, mimetype string, convertNumbers bool, out *os.File) erro
 	defer w.Flush()
 
 	return runner.TransformFile(file, runner.ContentTypeInfo{
-		Type: mimetype,
-	}, convertNumbers, w)
+		Type:           mimetype,
+		ConvertNumbers: convertNumbers,
+	}, w)
 }
 
 func getShape(resultFile, panelId string) (*runner.Shape, error) {
