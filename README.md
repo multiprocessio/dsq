@@ -481,6 +481,47 @@ dsq> SELECT * FROM {} WHERE NAME = 'Kevin';
 (0 rows)
 ```
 
+### Converting numbers in CSV and TSV files
+
+CSV and TSV files do not allow to specify the type of the individual
+values contained in them. All values are treated as strings by default.
+
+This can lead to unexpected results in queries. Consider the following
+example:
+
+```
+$ cat scores.csv
+name,score
+Fritz,90
+Rainer,95.2
+Fountainer,100
+
+$ dsq scores.csv "SELECT * FROM {} ORDER BY score"
+[{"name":"Fountainer","score":"100"},
+{"name":"Fritz","score":"90"},
+{"name":"Rainer","score":"95.2"}]
+```
+
+Note how the `score` column contains numerical values only. Still,
+sorting by that column yields unexpected results because the values are
+treated as strings, and sorted lexically. (You can tell that the
+individual scores were imported as strings because they're quoted in the
+JSON result.)
+
+Use the `-n` or `--convert-numbers` flag to auto-detect and convert
+numerical values (integers and floats) in imported files:
+
+```
+$ dsq ~/scores.csv --convert-numbers "SELECT * FROM {} ORDER BY score"
+[{"name":"Fritz","score":90},
+{"name":"Rainer","score":95.2},
+{"name":"Fountainer","score":100}]
+```
+
+Note how the scores are imported as numbers now and how the records in
+the result set are sorted by their numerical value. Also note that the
+individual scores are no longer quoted in the JSON result.
+
 ## Supported Data Types
 
 | Name | File Extension(s) | Mime Type | Notes |

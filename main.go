@@ -40,7 +40,7 @@ func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 	return runner.GetMimeType("x."+fileExtensionOrContentType, runner.ContentTypeInfo{})
 }
 
-func evalFileInto(file, mimetype string, out *os.File) error {
+func evalFileInto(file, mimetype string, convertNumbers bool, out *os.File) error {
 	if mimetype == "" {
 		mimetype = string(runner.GetMimeType(file, runner.ContentTypeInfo{}))
 	} else {
@@ -55,7 +55,8 @@ func evalFileInto(file, mimetype string, out *os.File) error {
 	defer w.Flush()
 
 	return runner.TransformFile(file, runner.ContentTypeInfo{
-		Type: mimetype,
+		Type:           mimetype,
+		ConvertNumbers: convertNumbers,
 	}, w)
 }
 
@@ -213,7 +214,7 @@ func getFilesContentHash(files []string) (string, error) {
 	return hex.EncodeToString(sha1.Sum(nil)), nil
 }
 
-func importFile(projectId string, file, mimetype string, ec runner.EvalContext) (*runner.PanelInfo, error) {
+func importFile(projectId string, file, mimetype string, convertNumbers bool, ec runner.EvalContext) (*runner.PanelInfo, error) {
 	panelId := uuid.New().String()
 	resultFile := ec.GetPanelResultsFile(projectId, panelId)
 	out, err := openTruncate(resultFile)
@@ -222,7 +223,7 @@ func importFile(projectId string, file, mimetype string, ec runner.EvalContext) 
 	}
 	defer out.Close()
 
-	if err := evalFileInto(file, mimetype, out); err != nil {
+	if err := evalFileInto(file, mimetype, convertNumbers, out); err != nil {
 		return nil, err
 	}
 
@@ -333,14 +334,15 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 }
 
 type args struct {
-	pipedMimetype string
-	pretty        bool
-	schema        bool
-	sqlFile       string
-	cacheSettings runner.CacheSettings
-	nonFlagArgs   []string
-	dumpCacheFile bool
-	isInteractive bool
+	pipedMimetype  string
+	pretty         bool
+	schema         bool
+	sqlFile        string
+	cacheSettings  runner.CacheSettings
+	nonFlagArgs    []string
+	dumpCacheFile  bool
+	isInteractive  bool
+	convertNumbers bool
 }
 
 func getArgs() (*args, error) {
@@ -412,6 +414,11 @@ func getArgs() (*args, error) {
 			args.isInteractive = true
 			args.pretty = true
 			args.cacheSettings.Enabled = true
+			continue
+		}
+
+		if arg == "-n" || arg == "--convert-numbers" {
+			args.convertNumbers = true
 			continue
 		}
 
@@ -558,7 +565,7 @@ func _main() error {
 	// When dumping schema, need to injest even if cache is on.
 	if !args.cacheSettings.CachePresent || !args.cacheSettings.Enabled || lastNonFlagArg == "" {
 		for _, file := range files {
-			panel, err := importFile(project.Id, file, mimetypeOverride[file], ec)
+			panel, err := importFile(project.Id, file, mimetypeOverride[file], args.convertNumbers, ec)
 			if err != nil {
 				return err
 			}
