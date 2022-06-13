@@ -57,6 +57,7 @@ func (sw *SQLiteResultItemWriter) flush() error {
 		}
 		query.WriteByte(')')
 	}
+
 	_, err := sw.db.Exec(query.String(), sw.rowBuffer.List()...)
 	if err != nil {
 		return err
