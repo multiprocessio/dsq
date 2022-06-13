@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -11,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,6 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/chzyer/readline"
 	"github.com/multiprocessio/datastation/runner"
@@ -40,7 +41,7 @@ func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 	return runner.GetMimeType("x."+fileExtensionOrContentType, runner.ContentTypeInfo{})
 }
 
-func evalFileInto(file, mimetype string, convertNumbers bool, out *os.File) error {
+func evalFileInto(file, mimetype string, convertNumbers bool, w *runner.ResultWriter) error {
 	if mimetype == "" {
 		mimetype = string(runner.GetMimeType(file, runner.ContentTypeInfo{}))
 	} else {
@@ -51,17 +52,10 @@ func evalFileInto(file, mimetype string, convertNumbers bool, out *os.File) erro
 		return fmt.Errorf("Unknown mimetype for file: %s.\n", file)
 	}
 
-	w := bufio.NewWriterSize(out, 1e6)
-	defer w.Flush()
-
 	return runner.TransformFile(file, runner.ContentTypeInfo{
 		Type:           mimetype,
 		ConvertNumbers: convertNumbers,
 	}, w)
-}
-
-func getShape(resultFile, panelId string) (*runner.Shape, error) {
-	return runner.ShapeFromFile(resultFile, panelId, runner.DefaultShapeMaxBytesToRead, 100)
 }
 
 var tableFileRe = regexp.MustCompile(`({(?P<number>[0-9]+)(((,\s*(?P<numbersinglepath>"(?:[^"\\]|\\.)*\"))?)|(,\s*(?P<numberdoublepath>'(?:[^'\\]|\\.)*\'))?)})|({((((?P<singlepath>"(?:[^"\\]|\\.)*\"))?)|((?P<doublepath>'(?:[^'\\]|\\.)*\'))?)})`)
@@ -216,18 +210,18 @@ func getFilesContentHash(files []string) (string, error) {
 
 func importFile(projectId string, file, mimetype string, convertNumbers bool, ec runner.EvalContext) (*runner.PanelInfo, error) {
 	panelId := uuid.New().String()
-	resultFile := ec.GetPanelResultsFile(projectId, panelId)
-	out, err := openTruncate(resultFile)
+
+	w, err := ec.GetResultWriter(projectId, panelId)
 	if err != nil {
 		return nil, err
 	}
-	defer out.Close()
+	defer w.Close()
 
-	if err := evalFileInto(file, mimetype, convertNumbers, out); err != nil {
+	if err := evalFileInto(file, mimetype, convertNumbers, w); err != nil {
 		return nil, err
 	}
 
-	s, err := getShape(resultFile, panelId)
+	s, err := w.Shape(panelId, runner.DefaultShapeMaxBytesToRead, 100)
 	if err != nil {
 		return nil, err
 	}
@@ -457,6 +451,8 @@ Examples:
 See the repo for more details: https://github.com/multiprocessio/dsq.`
 
 func _main() error {
+	rand.Seed(time.Now().UnixNano())
+
 	log.SetFlags(0)
 	runner.Verbose = false
 
