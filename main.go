@@ -208,15 +208,7 @@ func getFilesContentHash(files []string) (string, error) {
 	return hex.EncodeToString(sha1.Sum(nil)), nil
 }
 
-func importFile(projectId string, file, mimetype string, convertNumbers bool, ec runner.EvalContext) (*runner.PanelInfo, error) {
-	panelId := uuid.New().String()
-
-	w, err := ec.GetResultWriter(projectId, panelId)
-	if err != nil {
-		return nil, err
-	}
-	defer w.Close()
-
+func importFile(projectId, panelId, file, mimetype string, convertNumbers bool, w *runner.ResultWriter) (*runner.PanelInfo, error) {
 	if err := evalFileInto(file, mimetype, convertNumbers, w); err != nil {
 		return nil, err
 	}
@@ -561,11 +553,49 @@ func _main() error {
 	// When dumping schema, need to injest even if cache is on.
 	if !args.cacheSettings.CachePresent || !args.cacheSettings.Enabled || lastNonFlagArg == "" {
 		for _, file := range files {
-			panel, err := importFile(project.Id, file, mimetypeOverride[file], args.convertNumbers, ec)
+			panelId := uuid.New().String()
+
+			var w *runner.ResultWriter
+			mt := mimetypeOverride[file]
+			if mt == "" {
+				mt = string(runner.GetMimeType(file, runner.ContentTypeInfo{}))
+			} else {
+				mt = string(resolveContentType(mt))
+			}
+			mtm := runner.MimeType(mt)
+			if !args.convertNumbers && (mtm == runner.CSVMimeType ||
+				mtm == runner.ParquetMimeType ||
+				mtm == runner.AvroMimeType ||
+				mtm == runner.TSVMimeType ||
+				mtm == runner.JSONLinesMimeType ||
+				mtm == runner.JSONLinesMimeType ||
+				mtm == runner.RegexpLinesMimeType) {
+				// USE SQLiteWriter
+				out := ec.GetPanelResultsFile(project.Id, panelId)
+				sw, err := openSQLiteResultItemWriter(out, panelId)
+				if err != nil {
+					return err
+				}
+
+				w = runner.NewResultWriter(sw)
+			} else {
+				// Use JSONWriter
+				w, err = ec.GetResultWriter(project.Id, panelId)
+				if err != nil {
+					return err
+				}
+			}
+
+			panel, err := importFile(project.Id, panelId, file, mimetypeOverride[file], args.convertNumbers, w)
 			if err != nil {
 				return err
 			}
 			project.Pages[0].Panels = append(project.Pages[0].Panels, *panel)
+
+			err = w.Close()
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -603,3 +633,11 @@ func main() {
 		log.Fatal(err)
 	}
 }
+
+
+/*
+ NOTES: conditions where sql writer can be used
+  * Tabular data (parquet, csv, orc, avro) later (ods one sheet, excel one sheet, json top-level array)
+  * Convert numbers can't be set because we don't know the full column type when the table is created
+  * Schema can't be set
+*/
