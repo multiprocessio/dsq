@@ -634,7 +634,6 @@ func main() {
 	}
 }
 
-
 /*
  NOTES: conditions where sql writer can be used
   * Tabular data (parquet, csv, orc, avro) later (ods one sheet, excel one sheet, json top-level array)

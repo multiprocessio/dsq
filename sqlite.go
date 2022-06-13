@@ -1,25 +1,25 @@
 package main
 
 import (
-	"strings"
-	"errors"
 	"database/sql"
+	"errors"
+	"strings"
 
 	"github.com/multiprocessio/datastation/runner"
 )
 
 type SQLiteResultItemWriter struct {
-	db *sql.DB
-	fields []string
-	panelId string
-	rowBuffer []map[string]any
+	db        *sql.DB
+	fields    []string
+	panelId   string
+	rowBuffer runner.Vector[any]
 }
 
 func openSQLiteResultItemWriter(f string, panelId string) (runner.ResultItemWriter, error) {
 	var sw SQLiteResultItemWriter
 	sw.panelId = panelId
 
-	sw.rowBuffer = make([]map[string]any, 100)
+	sw.rowBuffer = runner.Vector[any]{}
 
 	var err error
 	sw.db, err = sql.Open("sqlite3_extended", f)
@@ -33,10 +33,36 @@ func openSQLiteResultItemWriter(f string, panelId string) (runner.ResultItemWrit
 func (sw *SQLiteResultItemWriter) createTable() error {
 	var columns []string
 	for _, field := range sw.fields {
-		columns = append(columns, "TEXT " + field)
+		columns = append(columns, field+" TEXT")
 	}
-	_, err := sw.db.Exec("CREATE TABLE \"" + sw.panelId +"\"("+ strings.Join(columns, ", ") +");")
+	_, err := sw.db.Exec("CREATE TABLE \"" + sw.panelId + "\"(" + strings.Join(columns, ", ") + ");")
 	return err
+}
+
+func (sw *SQLiteResultItemWriter) flush() error {
+	var query strings.Builder
+	query.WriteString("INSERT INTO \"" + sw.panelId + "\" VALUES ")
+	for i := 0; i < sw.rowBuffer.Index(); i++ {
+		if i > 0 {
+			query.WriteString(", ")
+		}
+
+		query.WriteByte('(')
+		for i := range sw.fields {
+			if i > 0 {
+				query.WriteString(", ")
+			}
+			query.WriteByte('?')
+		}
+		query.WriteByte(')')
+	}
+	_, err := sw.db.Exec(query.String(), sw.rowBuffer.List()...)
+	if err != nil {
+		return err
+	}
+
+	sw.rowBuffer.Reset()
+	return nil
 }
 
 func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
@@ -56,15 +82,16 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 		}
 	}
 
-	var args []any
-	var params []string
 	for _, field := range sw.fields {
-		args = append(args, m[field])
-		params = append(params, "?")
+		sw.rowBuffer.Append(m[field])
 	}
 
-	_, err := sw.db.Exec("INSERT INTO \""+sw.panelId+"\" VALUES ("+ strings.Join(params, ", ") +")")
-	return err
+	// Flush data
+	if written > 0 && written%100 == 0 {
+		return sw.flush()
+	}
+
+	return nil
 }
 
 func (sw *SQLiteResultItemWriter) SetNamespace(key string) error {
@@ -76,5 +103,11 @@ func (sw *SQLiteResultItemWriter) Shape(id string, maxBytesToRead, sampleSize in
 }
 
 func (sw *SQLiteResultItemWriter) Close() error {
+	if sw.rowBuffer.Index() > 0 {
+		err := sw.flush()
+		if err != nil {
+			return err
+		}
+	}
 	return sw.db.Close()
 }
