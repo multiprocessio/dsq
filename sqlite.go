@@ -39,10 +39,17 @@ func (sw *SQLiteResultItemWriter) createTable() error {
 	return err
 }
 
-func (sw *SQLiteResultItemWriter) flush() error {
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
+}
+
+func (sw *SQLiteResultItemWriter) makeQuery(rows int) string {
 	var query strings.Builder
 	query.WriteString("INSERT INTO \"" + sw.panelId + "\" VALUES ")
-	rows := sw.rowBuffer.Index() / len(sw.fields)
 	for i := 0; i < rows; i++ {
 		if i > 0 {
 			query.WriteString(", ")
@@ -58,9 +65,44 @@ func (sw *SQLiteResultItemWriter) flush() error {
 		query.WriteByte(')')
 	}
 
-	_, err := sw.db.Exec(query.String(), sw.rowBuffer.List()...)
+	return query.String()
+}
+
+func (sw *SQLiteResultItemWriter) flush() error {
+	rowsInBatch := 10
+	query := sw.makeQuery(rowsInBatch)
+
+	stmt, err := sw.db.Prepare(query)
 	if err != nil {
 		return err
+	}
+
+	rows := sw.rowBuffer.Index() / len(sw.fields)
+	args := sw.rowBuffer.List()
+	var leftover []any
+	for i := 0; i < rows; i += rowsInBatch {
+		if (i+rowsInBatch)*len(sw.fields) > rows {
+			leftover = args[i*len(sw.fields):]
+			break
+		}
+
+		_, err = stmt.Exec(args[i*len(sw.fields) : (i+rowsInBatch)*len(sw.fields)]...)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	if len(leftover) > 0 {
+		remainingRows := len(leftover) / len(sw.fields)
+		_, err := sw.db.Exec(sw.makeQuery(remainingRows), leftover...)
+		if err != nil {
+			return err
+		}
 	}
 
 	sw.rowBuffer.Reset()
@@ -89,7 +131,7 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 	}
 
 	// Flush data
-	if written > 0 && written%100 == 0 {
+	if written > 0 && written%10000 == 0 {
 		return sw.flush()
 	}
 
