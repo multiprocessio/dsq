@@ -94,7 +94,7 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False, within_secon
     t2 = datetime.now()
     s = (t2-t1).seconds
     if within_seconds and s > within_seconds:
-        printf(f'  FAILURE: completed in {s} seconds. Wanted <{within_seconds}s')
+        print(f'  FAILURE: completed in {s} seconds. Wanted <{within_seconds}s')
         failures += 1
         return
 

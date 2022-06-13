@@ -69,7 +69,7 @@ func (sw *SQLiteResultItemWriter) makeQuery(rows int) string {
 }
 
 func (sw *SQLiteResultItemWriter) flush() error {
-	rowsInBatch := 10
+	rowsInBatch := 100
 	query := sw.makeQuery(rowsInBatch)
 
 	stmt, err := sw.db.Prepare(query)
@@ -80,13 +80,16 @@ func (sw *SQLiteResultItemWriter) flush() error {
 	rows := sw.rowBuffer.Index() / len(sw.fields)
 	args := sw.rowBuffer.List()
 	var leftover []any
+	batchArgs := make([]any, rowsInBatch*len(sw.fields))
 	for i := 0; i < rows; i += rowsInBatch {
-		if (i+rowsInBatch)*len(sw.fields) > rows {
-			leftover = args[i*len(sw.fields):]
+		if i+rowsInBatch > rows {
+			leftover = make([]any, (rows-i)*len(sw.fields))
+			copy(leftover, args[i*len(sw.fields):])
 			break
 		}
 
-		_, err = stmt.Exec(args[i*len(sw.fields) : (i+rowsInBatch)*len(sw.fields)]...)
+		copy(batchArgs, args[i*len(sw.fields):(i+rowsInBatch)*len(sw.fields)])
+		_, err = stmt.Exec(batchArgs...)
 		if err != nil {
 			return err
 		}
