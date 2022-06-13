@@ -42,7 +42,8 @@ func (sw *SQLiteResultItemWriter) createTable() error {
 func (sw *SQLiteResultItemWriter) flush() error {
 	var query strings.Builder
 	query.WriteString("INSERT INTO \"" + sw.panelId + "\" VALUES ")
-	for i := 0; i < sw.rowBuffer.Index(); i++ {
+	rows := sw.rowBuffer.Index() / len(sw.fields)
+	for i := 0; i < rows; i++ {
 		if i > 0 {
 			query.WriteString(", ")
 		}

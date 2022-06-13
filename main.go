@@ -60,8 +60,8 @@ func evalFileInto(file, mimetype string, convertNumbers bool, w *runner.ResultWr
 
 var tableFileRe = regexp.MustCompile(`({(?P<number>[0-9]+)(((,\s*(?P<numbersinglepath>"(?:[^"\\]|\\.)*\"))?)|(,\s*(?P<numberdoublepath>'(?:[^'\\]|\\.)*\'))?)})|({((((?P<singlepath>"(?:[^"\\]|\\.)*\"))?)|((?P<doublepath>'(?:[^'\\]|\\.)*\'))?)})`)
 
-func rewriteQuery(query string) string {
-	query = strings.ReplaceAll(query, "{}", "DM_getPanel(0)")
+func rewriteQuery(query string, resolveDM_getPanelToId *map[string]string) string {
+	query = strings.ReplaceAll(query, "{}", "{0}")
 
 	query = tableFileRe.ReplaceAllStringFunc(query, func(m string) string {
 		matchForSubexps := tableFileRe.FindStringSubmatch(m)
@@ -82,6 +82,10 @@ func rewriteQuery(query string) string {
 
 		if path != "" {
 			return fmt.Sprintf("DM_getPanel(%s, %s)", index, path)
+		}
+
+		if resolveDM_getPanelToId != nil {
+			return "\"" + (*resolveDM_getPanelToId)[index] + "\""
 		}
 
 		return fmt.Sprintf("DM_getPanel(%s)", index)
@@ -208,14 +212,18 @@ func getFilesContentHash(files []string) (string, error) {
 	return hex.EncodeToString(sha1.Sum(nil)), nil
 }
 
-func importFile(projectId, panelId, file, mimetype string, convertNumbers bool, w *runner.ResultWriter) (*runner.PanelInfo, error) {
-	if err := evalFileInto(file, mimetype, convertNumbers, w); err != nil {
+func importFile(projectId, panelId, file, mimetype string, convertNumbers bool, w *runner.ResultWriter, withShape bool) (*runner.PanelInfo, error) {
+	err := evalFileInto(file, mimetype, convertNumbers, w)
+	if err != nil {
 		return nil, err
 	}
 
-	s, err := w.Shape(panelId, runner.DefaultShapeMaxBytesToRead, 100)
-	if err != nil {
-		return nil, err
+	s := &runner.Shape{}
+	if withShape {
+		s, err = w.Shape(panelId, runner.DefaultShapeMaxBytesToRead, 100)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &runner.PanelInfo{
@@ -227,8 +235,8 @@ func importFile(projectId, panelId, file, mimetype string, convertNumbers bool, 
 	}, nil
 }
 
-func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
-	query := rewriteQuery(queryRaw)
+func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string, resolveDM_getPanelToId *map[string]string) error {
+	query := rewriteQuery(queryRaw, resolveDM_getPanelToId)
 	panel := &runner.PanelInfo{
 		Type:    runner.DatabasePanel,
 		Content: query,
@@ -259,7 +267,7 @@ func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalCont
 	return dumpJSONFile(resultFile, args.pretty, args.schema)
 }
 
-func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
+func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string, resolveDM_getPanelToId *map[string]string) error {
 	completer := readline.NewPrefixCompleter(
 		readline.PcItem("SELECT"),
 		readline.PcItem("FROM"),
@@ -312,7 +320,7 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 			return nil
 		}
 
-		err = runQuery(queryRaw, project, ec, args, files)
+		err = runQuery(queryRaw, project, ec, args, files, resolveDM_getPanelToId)
 		if err != nil {
 			return err
 		}
@@ -550,29 +558,57 @@ func _main() error {
 	}
 
 	ec := runner.NewEvalContext(*runner.DefaultSettings, tmpDir)
+	connector, err := runner.MakeTmpSQLiteConnector()
+	if err != nil {
+		return err
+	}
+	if args.cacheSettings.Enabled {
+		connector.DatabaseConnectorInfo.Database.Database = cachedPath
+	}
+
+	useSQLiteWriter := !args.convertNumbers
+	if useSQLiteWriter {
+		tmp, err := ioutil.TempFile("", "dsq-sqlite-shared")
+		if err != nil {
+			return err
+		}
+		defer os.Remove(tmp.Name())
+		connector.DatabaseConnectorInfo.Database.Database = tmp.Name()
+	}
+
+	for _, file := range files {
+		mt := mimetypeOverride[file]
+		if mt == "" {
+			mt = string(runner.GetMimeType(file, runner.ContentTypeInfo{}))
+		} else {
+			mt = string(resolveContentType(mt))
+		}
+		mtm := runner.MimeType(mt)
+		useSQLiteWriter = useSQLiteWriter && (mtm == runner.CSVMimeType ||
+			mtm == runner.ParquetMimeType ||
+			mtm == runner.AvroMimeType ||
+			mtm == runner.TSVMimeType ||
+			mtm == runner.JSONLinesMimeType ||
+			mtm == runner.JSONLinesMimeType ||
+			mtm == runner.RegexpLinesMimeType)
+		if !useSQLiteWriter {
+			break
+		}
+	}
+
+	// This is going to break sometime.
+	if !useSQLiteWriter && !args.cacheSettings.Enabled {
+		connector.DatabaseConnectorInfo.Database.Database = ":memory:"
+	}
+
 	// When dumping schema, need to injest even if cache is on.
 	if !args.cacheSettings.CachePresent || !args.cacheSettings.Enabled || lastNonFlagArg == "" {
 		for _, file := range files {
 			panelId := uuid.New().String()
 
 			var w *runner.ResultWriter
-			mt := mimetypeOverride[file]
-			if mt == "" {
-				mt = string(runner.GetMimeType(file, runner.ContentTypeInfo{}))
-			} else {
-				mt = string(resolveContentType(mt))
-			}
-			mtm := runner.MimeType(mt)
-			if !args.convertNumbers && (mtm == runner.CSVMimeType ||
-				mtm == runner.ParquetMimeType ||
-				mtm == runner.AvroMimeType ||
-				mtm == runner.TSVMimeType ||
-				mtm == runner.JSONLinesMimeType ||
-				mtm == runner.JSONLinesMimeType ||
-				mtm == runner.RegexpLinesMimeType) {
-				// USE SQLiteWriter
-				out := ec.GetPanelResultsFile(project.Id, panelId)
-				sw, err := openSQLiteResultItemWriter(out, panelId)
+			if useSQLiteWriter {
+				sw, err := openSQLiteResultItemWriter(connector.DatabaseConnectorInfo.Database.Database, panelId)
 				if err != nil {
 					return err
 				}
@@ -586,7 +622,7 @@ func _main() error {
 				}
 			}
 
-			panel, err := importFile(project.Id, panelId, file, mimetypeOverride[file], args.convertNumbers, w)
+			panel, err := importFile(project.Id, panelId, file, mimetypeOverride[file], args.convertNumbers, w, !useSQLiteWriter)
 			if err != nil {
 				return err
 			}
@@ -610,21 +646,22 @@ func _main() error {
 		return dumpJSONFile(resultFile, args.pretty, args.schema)
 	}
 
-	connector, err := runner.MakeTmpSQLiteConnector()
-	if err != nil {
-		return err
-	}
-
-	if args.cacheSettings.Enabled {
-		connector.DatabaseConnectorInfo.Database.Database = cachedPath
-	}
 	project.Connectors = append(project.Connectors, *connector)
 
-	if args.isInteractive {
-		return repl(project, &ec, args, files)
+	var resolveDM_getPanelToId *map[string]string
+	if useSQLiteWriter {
+		m := map[string]string{}
+		for i, panel := range project.Pages[0].Panels {
+			m[fmt.Sprintf("%d", i)] = panel.Id
+		}
+		resolveDM_getPanelToId = &m
 	}
 
-	return runQuery(lastNonFlagArg, project, &ec, args, files)
+	if args.isInteractive {
+		return repl(project, &ec, args, files, resolveDM_getPanelToId)
+	}
+
+	return runQuery(lastNonFlagArg, project, &ec, args, files, resolveDM_getPanelToId)
 }
 
 func main() {
