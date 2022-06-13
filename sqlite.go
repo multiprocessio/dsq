@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"database/sql"
 	"errors"
 	"strings"
@@ -130,7 +131,16 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 	}
 
 	for _, field := range sw.fields {
-		sw.rowBuffer.Append(m[field])
+		v := m[field]
+		switch t := v.(type) {
+		case map[string]any:
+			bs, err := json.Marshal(t)
+			if err != nil {
+				return err
+			}
+			v = string(bs)
+		}
+		sw.rowBuffer.Append(v)
 	}
 
 	// Flush data
