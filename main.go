@@ -601,7 +601,6 @@ func _main() error {
 			mtm == runner.AvroMimeType ||
 			mtm == runner.TSVMimeType ||
 			mtm == runner.JSONLinesMimeType ||
-			mtm == runner.JSONLinesMimeType ||
 			mtm == runner.RegexpLinesMimeType)
 		if !useSQLiteWriter {
 			break
