@@ -133,7 +133,7 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 	for _, field := range sw.fields {
 		v := m[field]
 		switch t := v.(type) {
-		case map[string]any:
+		case []any:
 			bs, err := json.Marshal(t)
 			if err != nil {
 				return err
