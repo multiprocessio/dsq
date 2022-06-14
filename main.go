@@ -424,6 +424,7 @@ func getArgs() (*args, error) {
 
 		if arg == "--no-sqlite-writer" {
 			args.noSQLiteWriter = true
+			continue
 		}
 
 		args.nonFlagArgs = append(args.nonFlagArgs, arg)
@@ -624,7 +625,7 @@ func _main() error {
 
 			var w *runner.ResultWriter
 			if useSQLiteWriter {
-				tableName := fmt.Sprintf("table%d", i)
+				tableName := fmt.Sprintf("t_%d", i)
 				sw, err := openSQLiteResultItemWriter(connector.DatabaseConnectorInfo.Database.Database, tableName)
 				if err != nil {
 					return err
@@ -664,7 +665,7 @@ func _main() error {
 	if useSQLiteWriter {
 		m := map[string]string{}
 		for i := range files {
-			m[fmt.Sprintf("%d", i)] = fmt.Sprintf("table%d", i)
+			m[fmt.Sprintf("%d", i)] = fmt.Sprintf("t_%d", i)
 		}
 		resolveDM_getPanelToId = &m
 	}
