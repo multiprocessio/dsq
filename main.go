@@ -218,6 +218,11 @@ func importFile(projectId, panelId, file, mimetype string, convertNumbers bool, 
 		return nil, err
 	}
 
+	err = w.Close()
+	if err != nil {
+		return nil, err
+	}
+
 	s := &runner.Shape{}
 	if withShape {
 		s, err = w.Shape(panelId, runner.DefaultShapeMaxBytesToRead, 100)
@@ -337,6 +342,7 @@ type args struct {
 	dumpCacheFile  bool
 	isInteractive  bool
 	convertNumbers bool
+	noSQLiteWriter bool
 }
 
 func getArgs() (*args, error) {
@@ -414,6 +420,10 @@ func getArgs() (*args, error) {
 		if arg == "-n" || arg == "--convert-numbers" {
 			args.convertNumbers = true
 			continue
+		}
+
+		if arg == "--no-sqlite-writer" {
+			args.noSQLiteWriter = true
 		}
 
 		args.nonFlagArgs = append(args.nonFlagArgs, arg)
@@ -566,8 +576,9 @@ func _main() error {
 		connector.DatabaseConnectorInfo.Database.Database = cachedPath
 	}
 
-	useSQLiteWriter := !args.convertNumbers
-	if useSQLiteWriter {
+	// Check if we can use direct SQLite writer
+	useSQLiteWriter := !args.noSQLiteWriter && !args.convertNumbers && !args.schema
+	if useSQLiteWriter && !args.cacheSettings.Enabled {
 		tmp, err := ioutil.TempFile("", "dsq-sqlite-shared")
 		if err != nil {
 			return err
@@ -595,20 +606,26 @@ func _main() error {
 			break
 		}
 	}
+	// Done checking if we can use SQLiteWriter
 
-	// This is going to break sometime.
-	if !useSQLiteWriter && !args.cacheSettings.Enabled {
-		connector.DatabaseConnectorInfo.Database.Database = ":memory:"
+	// This is going to break sometime. Reset back to original possible values.
+	if !useSQLiteWriter {
+		if args.cacheSettings.Enabled {
+			connector.DatabaseConnectorInfo.Database.Database = cachedPath
+		} else {
+			connector.DatabaseConnectorInfo.Database.Database = ":memory:"
+		}
 	}
 
 	// When dumping schema, need to injest even if cache is on.
 	if !args.cacheSettings.CachePresent || !args.cacheSettings.Enabled || lastNonFlagArg == "" {
-		for _, file := range files {
+		for i, file := range files {
 			panelId := uuid.New().String()
 
 			var w *runner.ResultWriter
 			if useSQLiteWriter {
-				sw, err := openSQLiteResultItemWriter(connector.DatabaseConnectorInfo.Database.Database, panelId)
+				tableName := fmt.Sprintf("table%d", i)
+				sw, err := openSQLiteResultItemWriter(connector.DatabaseConnectorInfo.Database.Database, tableName)
 				if err != nil {
 					return err
 				}
@@ -627,11 +644,6 @@ func _main() error {
 				return err
 			}
 			project.Pages[0].Panels = append(project.Pages[0].Panels, *panel)
-
-			err = w.Close()
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -651,8 +663,8 @@ func _main() error {
 	var resolveDM_getPanelToId *map[string]string
 	if useSQLiteWriter {
 		m := map[string]string{}
-		for i, panel := range project.Pages[0].Panels {
-			m[fmt.Sprintf("%d", i)] = panel.Id
+		for i := range files {
+			m[fmt.Sprintf("%d", i)] = fmt.Sprintf("table%d", i)
 		}
 		resolveDM_getPanelToId = &m
 	}
@@ -670,10 +682,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-/*
- NOTES: conditions where sql writer can be used
-  * Tabular data (parquet, csv, orc, avro) later (ods one sheet, excel one sheet, json top-level array)
-  * Convert numbers can't be set because we don't know the full column type when the table is created
-  * Schema can't be set
-*/

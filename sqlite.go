@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"database/sql"
-	"errors"
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/multiprocessio/datastation/runner"
@@ -116,7 +116,7 @@ func (sw *SQLiteResultItemWriter) flush() error {
 func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 	m, ok := r.(map[string]any)
 	if !ok {
-		return errors.New("Row must be a map")
+		return fmt.Errorf("Row must be a map, got: %#v", r)
 	}
 
 	if len(sw.fields) == 0 {
@@ -152,11 +152,11 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 }
 
 func (sw *SQLiteResultItemWriter) SetNamespace(key string) error {
-	return errors.New("SetNamespace unimplemented")
+	return fmt.Errorf("SetNamespace unimplemented")
 }
 
 func (sw *SQLiteResultItemWriter) Shape(id string, maxBytesToRead, sampleSize int) (*runner.Shape, error) {
-	return nil, errors.New("Shape unimplemented")
+	return nil, fmt.Errorf("Shape unimplemented")
 }
 
 func (sw *SQLiteResultItemWriter) Close() error {
