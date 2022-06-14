@@ -9,6 +9,7 @@ import sys
 import tempfile
 from datetime import datetime
 
+DEBUG = '-d' in sys.argv or '--debug' in sys.argv
 WIN = os.name == 'nt'
 
 def cmd(to_run, bash=False, doNotReplaceWin=False):
@@ -27,14 +28,23 @@ failures = 0
 def test(name, to_run, want, fail=False, sort=False, winSkip=False, within_seconds=None, want_stderr=None):
     global tests
     global failures
+    
+    skip = False
+    for i, arg in enumerate(sys.argv):
+        if arg == '-f' or arg == '--filter':
+            if sys.argv[i+1].lower() not in name.lower():
+                return
+
     tests += 1
     skipped = True
 
     t1 = datetime.now()
 
     print('STARTING: ' + name)
+    if DEBUG:
+        print(to_run)
 
-    if WIN and winSkip:
+    if WIN and winSkip or skip:
       print('  SKIPPED\n')
       print()
       return
@@ -94,7 +104,7 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False, within_secon
     t2 = datetime.now()
     s = (t2-t1).seconds
     if within_seconds and s > within_seconds:
-        printf(f'  FAILURE: completed in {s} seconds. Wanted <{within_seconds}s')
+        print(f'  FAILURE: completed in {s} seconds. Wanted <{within_seconds}s')
         failures += 1
         return
 
@@ -287,7 +297,13 @@ to_run = """
 cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
 """
 
-test("Caching from pipe (second time so import not required)", to_run, want, sort=True, winSkip=True, within_seconds=5)
+test("Caching from pipe (second time so import not required sqlitewriter)", to_run, want, sort=True, winSkip=True, within_seconds=5)
+
+to_run = """
+cat taxi.csv | ./dsq --no-sqlite-writer --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
+"""
+
+test("Caching from pipe (second time so import not required, jsonwriter)", to_run, want, sort=True, winSkip=True, within_seconds=5)
 
 to_run = """
 cat testdata/taxi_trunc.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'"""

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -11,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,6 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/chzyer/readline"
 	"github.com/multiprocessio/datastation/runner"
@@ -40,7 +41,7 @@ func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 	return runner.GetMimeType("x."+fileExtensionOrContentType, runner.ContentTypeInfo{})
 }
 
-func evalFileInto(file, mimetype string, convertNumbers bool, out *os.File) error {
+func evalFileInto(file, mimetype string, convertNumbers bool, w *runner.ResultWriter) error {
 	if mimetype == "" {
 		mimetype = string(runner.GetMimeType(file, runner.ContentTypeInfo{}))
 	} else {
@@ -51,23 +52,16 @@ func evalFileInto(file, mimetype string, convertNumbers bool, out *os.File) erro
 		return fmt.Errorf("Unknown mimetype for file: %s.\n", file)
 	}
 
-	w := bufio.NewWriterSize(out, 1e6)
-	defer w.Flush()
-
 	return runner.TransformFile(file, runner.ContentTypeInfo{
 		Type:           mimetype,
 		ConvertNumbers: convertNumbers,
 	}, w)
 }
 
-func getShape(resultFile, panelId string) (*runner.Shape, error) {
-	return runner.ShapeFromFile(resultFile, panelId, runner.DefaultShapeMaxBytesToRead, 100)
-}
-
 var tableFileRe = regexp.MustCompile(`({(?P<number>[0-9]+)(((,\s*(?P<numbersinglepath>"(?:[^"\\]|\\.)*\"))?)|(,\s*(?P<numberdoublepath>'(?:[^'\\]|\\.)*\'))?)})|({((((?P<singlepath>"(?:[^"\\]|\\.)*\"))?)|((?P<doublepath>'(?:[^'\\]|\\.)*\'))?)})`)
 
-func rewriteQuery(query string) string {
-	query = strings.ReplaceAll(query, "{}", "DM_getPanel(0)")
+func rewriteQuery(query string, resolveDM_getPanelToId *map[string]string) string {
+	query = strings.ReplaceAll(query, "{}", "{0}")
 
 	query = tableFileRe.ReplaceAllStringFunc(query, func(m string) string {
 		matchForSubexps := tableFileRe.FindStringSubmatch(m)
@@ -88,6 +82,10 @@ func rewriteQuery(query string) string {
 
 		if path != "" {
 			return fmt.Sprintf("DM_getPanel(%s, %s)", index, path)
+		}
+
+		if resolveDM_getPanelToId != nil {
+			return "\"" + (*resolveDM_getPanelToId)[index] + "\""
 		}
 
 		return fmt.Sprintf("DM_getPanel(%s)", index)
@@ -214,22 +212,23 @@ func getFilesContentHash(files []string) (string, error) {
 	return hex.EncodeToString(sha1.Sum(nil)), nil
 }
 
-func importFile(projectId string, file, mimetype string, convertNumbers bool, ec runner.EvalContext) (*runner.PanelInfo, error) {
-	panelId := uuid.New().String()
-	resultFile := ec.GetPanelResultsFile(projectId, panelId)
-	out, err := openTruncate(resultFile)
+func importFile(projectId, panelId, file, mimetype string, convertNumbers bool, w *runner.ResultWriter, withShape bool) (*runner.PanelInfo, error) {
+	err := evalFileInto(file, mimetype, convertNumbers, w)
 	if err != nil {
 		return nil, err
 	}
-	defer out.Close()
 
-	if err := evalFileInto(file, mimetype, convertNumbers, out); err != nil {
+	err = w.Close()
+	if err != nil {
 		return nil, err
 	}
 
-	s, err := getShape(resultFile, panelId)
-	if err != nil {
-		return nil, err
+	s := &runner.Shape{}
+	if withShape {
+		s, err = w.Shape(panelId, runner.DefaultShapeMaxBytesToRead, 100)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &runner.PanelInfo{
@@ -241,8 +240,8 @@ func importFile(projectId string, file, mimetype string, convertNumbers bool, ec
 	}, nil
 }
 
-func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
-	query := rewriteQuery(queryRaw)
+func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string, resolveDM_getPanelToId *map[string]string) error {
+	query := rewriteQuery(queryRaw, resolveDM_getPanelToId)
 	panel := &runner.PanelInfo{
 		Type:    runner.DatabasePanel,
 		Content: query,
@@ -273,7 +272,7 @@ func runQuery(queryRaw string, project *runner.ProjectState, ec *runner.EvalCont
 	return dumpJSONFile(resultFile, args.pretty, args.schema)
 }
 
-func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string) error {
+func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, files []string, resolveDM_getPanelToId *map[string]string) error {
 	completer := readline.NewPrefixCompleter(
 		readline.PcItem("SELECT"),
 		readline.PcItem("FROM"),
@@ -326,7 +325,7 @@ func repl(project *runner.ProjectState, ec *runner.EvalContext, args *args, file
 			return nil
 		}
 
-		err = runQuery(queryRaw, project, ec, args, files)
+		err = runQuery(queryRaw, project, ec, args, files, resolveDM_getPanelToId)
 		if err != nil {
 			return err
 		}
@@ -343,6 +342,7 @@ type args struct {
 	dumpCacheFile  bool
 	isInteractive  bool
 	convertNumbers bool
+	noSQLiteWriter bool
 }
 
 func getArgs() (*args, error) {
@@ -422,6 +422,11 @@ func getArgs() (*args, error) {
 			continue
 		}
 
+		if arg == "--no-sqlite-writer" {
+			args.noSQLiteWriter = true
+			continue
+		}
+
 		args.nonFlagArgs = append(args.nonFlagArgs, arg)
 	}
 
@@ -457,6 +462,8 @@ Examples:
 See the repo for more details: https://github.com/multiprocessio/dsq.`
 
 func _main() error {
+	rand.Seed(time.Now().UnixNano())
+
 	log.SetFlags(0)
 	runner.Verbose = false
 
@@ -562,10 +569,77 @@ func _main() error {
 	}
 
 	ec := runner.NewEvalContext(*runner.DefaultSettings, tmpDir)
+	connector, err := runner.MakeTmpSQLiteConnector()
+	if err != nil {
+		return err
+	}
+	if args.cacheSettings.Enabled {
+		connector.DatabaseConnectorInfo.Database.Database = cachedPath
+	}
+
+	// Check if we can use direct SQLite writer
+	useSQLiteWriter := !args.noSQLiteWriter && !args.convertNumbers && !args.schema
+	if useSQLiteWriter && !args.cacheSettings.Enabled {
+		tmp, err := ioutil.TempFile("", "dsq-sqlite-shared")
+		if err != nil {
+			return err
+		}
+		defer os.Remove(tmp.Name())
+		connector.DatabaseConnectorInfo.Database.Database = tmp.Name()
+	}
+
+	for _, file := range files {
+		mt := mimetypeOverride[file]
+		if mt == "" {
+			mt = string(runner.GetMimeType(file, runner.ContentTypeInfo{}))
+		} else {
+			mt = string(resolveContentType(mt))
+		}
+		mtm := runner.MimeType(mt)
+		useSQLiteWriter = useSQLiteWriter && (mtm == runner.CSVMimeType ||
+			mtm == runner.ParquetMimeType ||
+			mtm == runner.AvroMimeType ||
+			mtm == runner.TSVMimeType ||
+			mtm == runner.JSONLinesMimeType ||
+			mtm == runner.RegexpLinesMimeType)
+		if !useSQLiteWriter {
+			break
+		}
+	}
+	// Done checking if we can use SQLiteWriter
+
+	// This is going to break sometime. Reset back to original possible values.
+	if !useSQLiteWriter {
+		if args.cacheSettings.Enabled {
+			connector.DatabaseConnectorInfo.Database.Database = cachedPath
+		} else {
+			connector.DatabaseConnectorInfo.Database.Database = ":memory:"
+		}
+	}
+
 	// When dumping schema, need to injest even if cache is on.
 	if !args.cacheSettings.CachePresent || !args.cacheSettings.Enabled || lastNonFlagArg == "" {
-		for _, file := range files {
-			panel, err := importFile(project.Id, file, mimetypeOverride[file], args.convertNumbers, ec)
+		for i, file := range files {
+			panelId := uuid.New().String()
+
+			var w *runner.ResultWriter
+			if useSQLiteWriter {
+				tableName := fmt.Sprintf("t_%d", i)
+				sw, err := openSQLiteResultItemWriter(connector.DatabaseConnectorInfo.Database.Database, tableName)
+				if err != nil {
+					return err
+				}
+
+				w = runner.NewResultWriter(sw)
+			} else {
+				// Use JSONWriter
+				w, err = ec.GetResultWriter(project.Id, panelId)
+				if err != nil {
+					return err
+				}
+			}
+
+			panel, err := importFile(project.Id, panelId, file, mimetypeOverride[file], args.convertNumbers, w, !useSQLiteWriter)
 			if err != nil {
 				return err
 			}
@@ -584,21 +658,22 @@ func _main() error {
 		return dumpJSONFile(resultFile, args.pretty, args.schema)
 	}
 
-	connector, err := runner.MakeTmpSQLiteConnector()
-	if err != nil {
-		return err
-	}
-
-	if args.cacheSettings.Enabled {
-		connector.DatabaseConnectorInfo.Database.Database = cachedPath
-	}
 	project.Connectors = append(project.Connectors, *connector)
 
-	if args.isInteractive {
-		return repl(project, &ec, args, files)
+	var resolveDM_getPanelToId *map[string]string
+	if useSQLiteWriter {
+		m := map[string]string{}
+		for i := range files {
+			m[fmt.Sprintf("%d", i)] = fmt.Sprintf("t_%d", i)
+		}
+		resolveDM_getPanelToId = &m
 	}
 
-	return runQuery(lastNonFlagArg, project, &ec, args, files)
+	if args.isInteractive {
+		return repl(project, &ec, args, files, resolveDM_getPanelToId)
+	}
+
+	return runQuery(lastNonFlagArg, project, &ec, args, files, resolveDM_getPanelToId)
 }
 
 func main() {
