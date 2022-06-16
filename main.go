@@ -347,6 +347,11 @@ type args struct {
 
 func getArgs() (*args, error) {
 	args := &args{}
+
+	args.noSQLiteWriter = strings.ToLower(os.Getenv("DSQ_NO_SQLITE_WRITER")) == "true"
+	args.convertNumbers = strings.ToLower(os.Getenv("DSQ_CONVERT_NUMBERS")) == "true"
+	args.cacheSettings.Enabled = strings.ToLower(os.Getenv("DSQ_CACHE")) == "true"
+
 	osArgs := os.Args[1:]
 	for i := 0; i < len(osArgs); i++ {
 		arg := osArgs[i]

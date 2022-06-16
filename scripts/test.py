@@ -297,13 +297,7 @@ to_run = """
 cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
 """
 
-test("Caching from pipe (second time so import not required sqlitewriter)", to_run, want, sort=True, winSkip=True, within_seconds=5)
-
-to_run = """
-cat taxi.csv | ./dsq --no-sqlite-writer --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
-"""
-
-test("Caching from pipe (second time so import not required, jsonwriter)", to_run, want, sort=True, winSkip=True, within_seconds=5)
+test("Caching from pipe (second time so import not required)", to_run, want, sort=True, winSkip=True, within_seconds=5)
 
 to_run = """
 cat testdata/taxi_trunc.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'"""
