@@ -603,6 +603,7 @@ func _main() error {
 		mtm := runner.MimeType(mt)
 		useSQLiteWriter = useSQLiteWriter && (mtm == runner.CSVMimeType ||
 			mtm == runner.TSVMimeType ||
+			mtm == runner.JSONLinesMimeType ||
 			mtm == runner.RegexpLinesMimeType)
 		if !useSQLiteWriter {
 			break

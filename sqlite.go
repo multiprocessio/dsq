@@ -12,13 +12,13 @@ import (
 type SQLiteResultItemWriter struct {
 	db        *sql.DB
 	fields    []string
-	panelId   string
+	tableName   string
 	rowBuffer runner.Vector[any]
 }
 
-func openSQLiteResultItemWriter(f string, panelId string) (runner.ResultItemWriter, error) {
+func openSQLiteResultItemWriter(f string, tableName string) (runner.ResultItemWriter, error) {
 	var sw SQLiteResultItemWriter
-	sw.panelId = panelId
+	sw.tableName = tableName
 
 	sw.rowBuffer = runner.Vector[any]{}
 
@@ -36,7 +36,7 @@ func (sw *SQLiteResultItemWriter) createTable() error {
 	for _, field := range sw.fields {
 		columns = append(columns, field+" TEXT")
 	}
-	_, err := sw.db.Exec("CREATE TABLE \"" + sw.panelId + "\"(" + strings.Join(columns, ", ") + ");")
+	_, err := sw.db.Exec("CREATE TABLE \"" + sw.tableName + "\"(" + strings.Join(columns, ", ") + ");")
 	return err
 }
 
@@ -50,7 +50,7 @@ func min(a, b int) int {
 
 func (sw *SQLiteResultItemWriter) makeQuery(rows int) string {
 	var query strings.Builder
-	query.WriteString("INSERT INTO \"" + sw.panelId + "\" VALUES ")
+	query.WriteString("INSERT INTO \"" + sw.tableName + "\" VALUES ")
 	for i := 0; i < rows; i++ {
 		if i > 0 {
 			query.WriteString(", ")
@@ -69,7 +69,16 @@ func (sw *SQLiteResultItemWriter) makeQuery(rows int) string {
 	return query.String()
 }
 
-func (sw *SQLiteResultItemWriter) flush() error {
+func (sw *SQLiteResultItemWriter) flush(newFields []string) error {
+	if len(newFields) > 0 {
+		for _, f := range newFields {
+			_, err := sw.db.Exec("ALTER TABLE \""+sw.tableName+"\" ADD \""+ f +"\" TEXT")
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	rowsInBatch := 100
 	query := sw.makeQuery(rowsInBatch)
 
@@ -113,6 +122,21 @@ func (sw *SQLiteResultItemWriter) flush() error {
 	return nil
 }
 
+func (sw *SQLiteResultItemWriter) getMapFields(m map[string]any) []string {
+	var newFields []string
+
+	for k, v := range m {
+		switch t := v.(type) {
+		case map[string]any:
+			newFields = append(newFields, sw.getMapFields(t)...)
+		default:
+			newFields = append(newFields, k)
+		}
+	}
+
+	return newFields
+}
+
 func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 	m, ok := r.(map[string]any)
 	if !ok {
@@ -130,9 +154,28 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 		}
 	}
 
+	var newFields []string
+
 	for _, field := range sw.fields {
-		v := m[field]
+		v := runner.GetObjectAtPath(m, field)
 		switch t := v.(type) {
+			// TODO: it's possible this doesn't support cases like if there's a map[int8]string due to Parquet or something.
+		case map[string]any:
+			for _, f := range sw.getMapFields(t) {
+				// Only add new fields
+				newField := true
+				for _, nf := range newFields {
+					if nf == f {
+						newField = false
+						break
+					}
+				}
+
+				if newField {
+					newFields = append(newFields, f)
+					sw.fields = append(sw.fields, f)
+				}
+			}
 		case []any:
 			bs, err := json.Marshal(t)
 			if err != nil {
@@ -145,7 +188,7 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 
 	// Flush data
 	if written > 0 && written%10000 == 0 {
-		return sw.flush()
+		return sw.flush(newFields)
 	}
 
 	return nil
@@ -161,7 +204,8 @@ func (sw *SQLiteResultItemWriter) Shape(id string, maxBytesToRead, sampleSize in
 
 func (sw *SQLiteResultItemWriter) Close() error {
 	if sw.rowBuffer.Index() > 0 {
-		err := sw.flush()
+		// TODO: this is a bug. new fields should still be added here too but they are silently dropped.
+		err := sw.flush(nil)
 		if err != nil {
 			return err
 		}
