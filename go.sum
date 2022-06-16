@@ -445,8 +445,8 @@ github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjY
 github.com/modocache/gover v0.0.0-20171022184752-b58185e213c5/go.mod h1:caMODM3PzxT8aQXRPkAt8xlV/e7d7w8GM5g0fa5F0D8=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 h1:RWengNIwukTxcDr9M+97sNutRR1RKhG96O6jWumTTnw=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826/go.mod h1:TaXosZuwdSHYgviHp1DAtfrULt5eUgsSMsZf+YrPgl8=
-github.com/multiprocessio/datastation/runner v0.0.0-20220614050412-e3776fe304bc h1:PZrwLRdb13fjcblFznyzFjTZisKKLl15VTrN5Bp3EFw=
-github.com/multiprocessio/datastation/runner v0.0.0-20220614050412-e3776fe304bc/go.mod h1:UCms/xK08DspNqDDZ5XsaIlc39AuREmeELspFYghMGI=
+github.com/multiprocessio/datastation/runner v0.0.0-20220616090857-d42388371862 h1:bgzazkNqaktd7lQqOcG6TXG1iz8S1GeGbwEcy0/Zh9k=
+github.com/multiprocessio/datastation/runner v0.0.0-20220616090857-d42388371862/go.mod h1:UCms/xK08DspNqDDZ5XsaIlc39AuREmeELspFYghMGI=
 github.com/multiprocessio/go-json v0.0.0-20220308002443-61d497dd7b9e h1:NlPl7amllnQyVAkZgjBvFEkKxJSba/R8ZpaTodc7SIQ=
 github.com/multiprocessio/go-json v0.0.0-20220308002443-61d497dd7b9e/go.mod h1:huI4M/MrI5px/SgmXYi0a2byKikSLgDrnMQuXOqKtw4=
 github.com/multiprocessio/go-openoffice v0.0.0-20220110232726-064f5dda1956 h1:WVofL03Eq+z3LbDOfH5eKzu2U85LFZZngOMBlNaO/H0=
