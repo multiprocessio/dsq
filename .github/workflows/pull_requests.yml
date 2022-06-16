@@ -46,9 +46,11 @@ jobs:
         shell: bash
 
       # Subtle behavioral differences between powershell/cmd and bash. For example nested double quotes must be escaped.
-      - run: python3 ./scripts/test.py
+      - name: Test with powershell
+        run: python3 ./scripts/test.py
         shell: powershell
-      - run: python3 ./scripts/test.py
+      - name: Test with cmd.exe
+        run: python3 ./scripts/test.py
         shell: cmd
 
   dsq-tests-macos:
