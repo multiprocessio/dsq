@@ -34,6 +34,9 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False, within_secon
         if arg == '-f' or arg == '--filter':
             if sys.argv[i+1].lower() not in name.lower():
                 return
+        if arg == '-fo' or arg == '--filter-out':
+            if sys.argv[i+1].lower() in name.lower():
+                return
 
     tests += 1
     skipped = True
@@ -297,13 +300,7 @@ to_run = """
 cat taxi.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
 """
 
-test("Caching from pipe (second time so import not required sqlitewriter)", to_run, want, sort=True, winSkip=True, within_seconds=5)
-
-to_run = """
-cat taxi.csv | ./dsq --no-sqlite-writer --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'
-"""
-
-test("Caching from pipe (second time so import not required, jsonwriter)", to_run, want, sort=True, winSkip=True, within_seconds=5)
+test("Caching from pipe (second time so import not required)", to_run, want, sort=True, winSkip=True, within_seconds=5)
 
 to_run = """
 cat testdata/taxi_trunc.csv | ./dsq --cache -s csv 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM {} GROUP BY passenger_count ORDER BY COUNT(*) DESC'"""
@@ -339,6 +336,10 @@ test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 to_run = """./dsq ./testdata/regr/36.json 'SELECT * FROM {}'"""
 want = '[{"a": 1, "b": 2, "c": "[1,2]"}]'
 test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
+
+to_run = """./dsq ./testdata/regr/67.jsonl 'SELECT COUNT(1) AS count FROM {}'"""
+want = '[{"count": 1}]'
+test("https://github.com/multiprocessio/dsq/issues/67", to_run, want, sort=True)
 
 # END OF REGRESSION TESTS
 
