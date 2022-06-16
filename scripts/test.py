@@ -34,6 +34,9 @@ def test(name, to_run, want, fail=False, sort=False, winSkip=False, within_secon
         if arg == '-f' or arg == '--filter':
             if sys.argv[i+1].lower() not in name.lower():
                 return
+        if arg == '-fo' or arg == '--filter-out':
+            if sys.argv[i+1].lower() in name.lower():
+                return
 
     tests += 1
     skipped = True
