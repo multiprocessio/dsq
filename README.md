@@ -463,6 +463,8 @@ file into SQLite.
 So even if you change the query, as long as the file doesn't change,
 the cache is effective.
 
+To make this permanent you can export `DSQ_CACHE=true` in your environment.
+
 ### Interactive REPL
 
 Use the `-i` or `--interactive` flag to enter an interactive REPL
@@ -521,6 +523,9 @@ $ dsq ~/scores.csv --convert-numbers "SELECT * FROM {} ORDER BY score"
 Note how the scores are imported as numbers now and how the records in
 the result set are sorted by their numerical value. Also note that the
 individual scores are no longer quoted in the JSON result.
+
+To make this permanent you can export `DSQ_CONVERT_NUMBERS=true` in
+your environment. Turning this on disables some optimizations.
 
 ## Supported Data Types
 
