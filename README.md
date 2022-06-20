@@ -554,17 +554,77 @@ kinds of SQL queries on arbitrary (structured) data.
 
 ## Comparisons
 
-| Name | Link | Caching | Engine | Supported File Types |
-|-|---|-|-|------------------------------------------------------------------------|
-| dsq | Here | Yes | SQLite | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), Avro, Logs |
-| q | http://harelba.github.io/q/ | Yes | SQLite | CSV, TSV |
-| datafusion-cli | https://github.com/apache/arrow-datafusion | No | Custom engine | CSV, Parquet |
-| textql | https://github.com/dinedal/textql | No | SQLite | CSV, TSV |
-| octoql | https://github.com/cube2222/octosql | No | Custom engine | JSON, CSV, Excel, Parquet |
-| csvq | https://github.com/mithrandie/csvq | No | Custom engine | CSV |
-| sqlite-utils | https://github.com/simonw/sqlite-utils | No | SQLite | CSV, TSV |
-| trdsql | https://github.com/noborus/trdsql | No | SQLite, MySQL or PostgreSQL | Few variations of JSON, TSV, LTSV, TBLN, CSV |
-| spysql | https://github.com/dcmoura/spyql | No | Custom engine | CSV, JSON, TEXT |
+| Name | Link | Caching | Engine | Supported File Types | Binary Size |
+|-|---|-|-|------------------------------------------------------------------------|-|
+| dsq | Here | Yes | SQLite | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), ORC, Avro, Logs | 49M |
+| q | http://harelba.github.io/q/ | Yes | SQLite | CSV, TSV | 82M |
+| textql | https://github.com/dinedal/textql | No | SQLite | CSV, TSV | 7.3M |
+| octoql | https://github.com/cube2222/octosql | No | Custom engine | JSON, CSV, Excel, Parquet | 18M |
+| csvq | https://github.com/mithrandie/csvq | No | Custom engine | CSV | 15M |
+| sqlite-utils | https://github.com/simonw/sqlite-utils | No | SQLite | CSV, TSV | N/A, Not a single binary |
+| trdsql | https://github.com/noborus/trdsql | No | SQLite, MySQL or PostgreSQL | Few variations of JSON, TSV, LTSV, TBLN, CSV | 14M |
+| spysql | https://github.com/dcmoura/spyql | No | Custom engine | CSV, JSON, TEXT | N/A, Not a single binary |
+| duckdb | https://github.com/duckdb/duckdb | ? | Custom engine | CSV, Parquet | 35M |
+
+Not included:
+
+* clickhouse-local: fastest of anything listed here but so gigantic (over 2GB) that it can't reasonably be considered a good tool for any environment
+* sqlite3: requires multiple commands to ingest CSV, not great for one-liners
+* datafusion-cli: very fast (slower only than clickhouse-local) but requires multiple commands to ingest CSV, so not great for one-liners
+
+## Benchmark
+
+This benchmark is run on a [dedicated bare metal instance on OVH](https://us.ovhcloud.com/bare-metal/rise/rise-1/).
+
+* RAM: 64 GB DDR4 ECC 2,133 MHz
+* Disk: 2x450 GB SSD NVMe in Soft RAID
+* Processor: Intel Xeon E3-1230v6 - 4c/8t - 3.5 GHz/3.9 GHz
+
+The script is [here](./scripts/benchmark.sh).
+
+It runs the `SELECT passenger_count, COUNT(*), AVG(total_amount) FROM
+taxi.csv GROUP BY passenger_count` query against the well-known NYC
+Yellow Taxi Trip Dataset. Specifically, the CSV file from April 2021
+is used. It's a 200MB CSV file with ~2 million rows, 18 columns, and
+mostly numerical values.
+
+This benchmark was run June 19, 2022.
+
+| Program | Version             |       Mean [s] | Min [s] | Max [s] |     Relative |
+|:--------|:--------------------|---------------:|--------:|--------:|-------------:|
+| dsq     | 0.20.1 (caching on) |  1.151 ± 0.010 |   1.131 |   1.159 |         1.00 |
+| duckdb  | 0.3.4               |  1.723 ± 0.023 |   1.708 |   1.757 |  1.50 ± 0.02 |
+| octosql | 0.7.3               |  2.005 ± 0.008 |   1.991 |   2.015 |  1.74 ± 0.02 |
+| q       | 3.1.6 (caching on)  |  2.028 ± 0.010 |   2.021 |   2.055 |  1.76 ± 0.02 |
+| trdsql  | 0.10.0              | 12.972 ± 0.225 |  12.554 |  13.392 | 11.27 ± 0.22 |
+| dsq     | 0.20.1 (default)    | 15.030 ± 0.086 |  14.895 |  15.149 | 13.06 ± 0.13 |
+| textql  | fca00ec             | 19.148 ± 0.183 |  18.865 |  19.500 | 16.63 ± 0.21 |
+| spyql   | 0.6.0               | 16.985 ± 0.105 |  16.854 |  17.161 | 14.75 ± 0.16 |
+| q       | 3.1.6 (default)     | 24.061 ± 0.095 |  23.954 |  24.220 | 20.90 ± 0.20 |
+
+Not included:
+* clickhouse-local: faster than any of these but over 2GB so not a reasonable general-purpose CLI
+* datafusion-cli: slower only than clickhouse-local but requires multiple commands to ingest CSV, can't do one-liners
+* sqlite3: requires multiple commands to ingest CSV, can't do one-liners
+* sqlite-utils: takes minutes to finish
+
+This is an adaptation of the [benchmark that the octosql devs run](https://github.com/cube2222/octosql#Benchmarks).
+
+OctoSQL, duckdb, and SpyQL implement their own SQL engines.
+dsq, q, trdsql, and textql copy data into SQLite and depend on the
+SQLite engine for query execution.
+
+Tools that implement their own SQL engines can do better on 1)
+ingestion and 2) queries that act on a subset of data (such as limited
+columns or limited rows). These tools implement ad-hoc subsets of SQL
+that may be missing or differ from your favorite syntax. On the other
+hand, tools that depend on SQLite have the benefit of providing a
+well-tested and well-documented SQL engine.
+
+dsq also comes with numerous [useful
+functions](https://github.com/multiprocessio/go-sqlite3-stdlib)
+(e.g. best-effort date parsing, URL parsing/extraction, statistics
+functions, etc.) on top of [SQLite builtins](https://www.sqlite.org/lang_corefunc.html).
 
 ## Third-party integrations
 
