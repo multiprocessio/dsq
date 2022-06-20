@@ -574,33 +574,38 @@ Not included:
 
 ## Benchmark
 
-This benchmark is run on a [dedicated bare metal instance on OVH](https://us.ovhcloud.com/bare-metal/rise/rise-1/).
+This benchmark was run June 19, 2022. It is run on a [dedicated bare
+metal instance on
+OVH](https://us.ovhcloud.com/bare-metal/rise/rise-1/) with:
 
-* RAM: 64 GB DDR4 ECC 2,133 MHz
-* Disk: 2x450 GB SSD NVMe in Soft RAID
-* Processor: Intel Xeon E3-1230v6 - 4c/8t - 3.5 GHz/3.9 GHz
+* 64 GB DDR4 ECC 2,133 MHz
+* 2x450 GB SSD NVMe in Soft RAID
+* Intel Xeon E3-1230v6 - 4c/8t - 3.5 GHz/3.9 GHz
 
-The script is [here](./scripts/benchmark.sh).
-
-It runs the `SELECT passenger_count, COUNT(*), AVG(total_amount) FROM
+It runs a `SELECT passenger_count, COUNT(*), AVG(total_amount) FROM
 taxi.csv GROUP BY passenger_count` query against the well-known NYC
 Yellow Taxi Trip Dataset. Specifically, the CSV file from April 2021
 is used. It's a 200MB CSV file with ~2 million rows, 18 columns, and
 mostly numerical values.
 
-This benchmark was run June 19, 2022.
+The script is [here](./scripts/benchmark.sh). It is an adaptation of
+the [benchmark that the octosql devs
+run](https://github.com/cube2222/octosql#Benchmarks).
 
-| Program | Version             |       Mean [s] | Min [s] | Max [s] |     Relative |
-|:--------|:--------------------|---------------:|--------:|--------:|-------------:|
-| dsq     | 0.20.1 (caching on) |  1.151 ± 0.010 |   1.131 |   1.159 |         1.00 |
-| duckdb  | 0.3.4               |  1.723 ± 0.023 |   1.708 |   1.757 |  1.50 ± 0.02 |
-| octosql | 0.7.3               |  2.005 ± 0.008 |   1.991 |   2.015 |  1.74 ± 0.02 |
-| q       | 3.1.6 (caching on)  |  2.028 ± 0.010 |   2.021 |   2.055 |  1.76 ± 0.02 |
-| trdsql  | 0.10.0              | 12.972 ± 0.225 |  12.554 |  13.392 | 11.27 ± 0.22 |
-| dsq     | 0.20.1 (default)    | 15.030 ± 0.086 |  14.895 |  15.149 | 13.06 ± 0.13 |
-| textql  | fca00ec             | 19.148 ± 0.183 |  18.865 |  19.500 | 16.63 ± 0.21 |
-| spyql   | 0.6.0               | 16.985 ± 0.105 |  16.854 |  17.161 | 14.75 ± 0.16 |
-| q       | 3.1.6 (default)     | 24.061 ± 0.095 |  23.954 |  24.220 | 20.90 ± 0.20 |
+| Program   | Version             |       Mean [s] | Min [s] | Max [s] |     Relative |
+|:----------|:--------------------|---------------:|--------:|--------:|-------------:|
+| dsq       | 0.20.1 (caching on) |  1.151 ± 0.010 |   1.131 |   1.159 |         1.00 |
+| duckdb    | 0.3.4               |  1.723 ± 0.023 |   1.708 |   1.757 |  1.50 ± 0.02 |
+| octosql   | 0.7.3               |  2.005 ± 0.008 |   1.991 |   2.015 |  1.74 ± 0.02 |
+| q         | 3.1.6 (caching on)  |  2.028 ± 0.010 |   2.021 |   2.055 |  1.76 ± 0.02 |
+| sqlite3 * | 3.36.0              |  4.204 ± 0.018 |   4.177 |   4.229 |  3.64 ± 0.04 |
+| trdsql    | 0.10.0              | 12.972 ± 0.225 |  12.554 |  13.392 | 11.27 ± 0.22 |
+| dsq       | 0.20.1 (default)    | 15.030 ± 0.086 |  14.895 |  15.149 | 13.06 ± 0.13 |
+| textql    | fca00ec             | 19.148 ± 0.183 |  18.865 |  19.500 | 16.63 ± 0.21 |
+| spyql     | 0.6.0               | 16.985 ± 0.105 |  16.854 |  17.161 | 14.75 ± 0.16 |
+| q         | 3.1.6 (default)     | 24.061 ± 0.095 |  23.954 |  24.220 | 20.90 ± 0.20 |
+
+\* While dsq and q are built on top of sqlite3 there is not a builtin way in sqlite3 to cache ingested files without a bit of scripting
 
 Not included:
 * clickhouse-local: faster than any of these but over 2GB so not a reasonable general-purpose CLI
@@ -608,7 +613,7 @@ Not included:
 * sqlite3: requires multiple commands to ingest CSV, can't do one-liners
 * sqlite-utils: takes minutes to finish
 
-This is an adaptation of the [benchmark that the octosql devs run](https://github.com/cube2222/octosql#Benchmarks).
+### Notes
 
 OctoSQL, duckdb, and SpyQL implement their own SQL engines.
 dsq, q, trdsql, and textql copy data into SQLite and depend on the
@@ -619,7 +624,8 @@ ingestion and 2) queries that act on a subset of data (such as limited
 columns or limited rows). These tools implement ad-hoc subsets of SQL
 that may be missing or differ from your favorite syntax. On the other
 hand, tools that depend on SQLite have the benefit of providing a
-well-tested and well-documented SQL engine.
+well-tested and well-documented SQL engine. DuckDB is exceptional
+since there is a dedicated company behind it.
 
 dsq also comes with numerous [useful
 functions](https://github.com/multiprocessio/go-sqlite3-stdlib)

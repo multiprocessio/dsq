@@ -1,3 +1,6 @@
 *~
 dsq
 *.exe
+taxi.*
+datafusion_commands.txt
+benchmarks.md

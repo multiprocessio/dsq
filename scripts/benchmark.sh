@@ -2,6 +2,7 @@
 7z e -aos testdata/taxi.csv.7z
 
 hyperfine --min-runs 10 -w 2 --export-markdown benchmarks.md \
+"sqlite3 :memory: -cmd '.mode csv' -cmd '.import taxi.csv taxi' 'SELECT passenger_count, COUNT(*), AVG(total_amount) FROM taxi GROUP BY passenger_count'" \
 "duckdb -c \"SELECT passenger_count, COUNT(*), AVG(total_amount) FROM 'taxi.csv' GROUP BY passenger_count\"" \
 'trdsql -ih "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM taxi.csv GROUP BY passenger_count"' \
 'OCTOSQL_NO_TELEMETRY=1 octosql "SELECT passenger_count, COUNT(*), AVG(total_amount) FROM taxi.csv GROUP BY passenger_count"' \
