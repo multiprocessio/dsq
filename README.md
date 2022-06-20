@@ -1,6 +1,4 @@
-# Commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more.
-
-## Stay in the loop
+# Commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more
 
 Since Github doesn't provide a great way for you to learn about new
 releases and features, don't just star the repo, join the [mailing
@@ -9,8 +7,6 @@ list](https://docs.google.com/forms/d/e/1FAIpQLSfYF3AZivacRrQWanC-skd0iI23ermwPd
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 **Table of Contents**
 
-- [Commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more.](#commandline-tool-for-running-sql-queries-against-json-csv-excel-parquet-and-more)
-    - [Stay in the loop](#stay-in-the-loop)
     - [About](#about)
     - [Install](#install)
         - [macOS Homebrew](#macos-homebrew)
