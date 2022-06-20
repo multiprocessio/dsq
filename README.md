@@ -610,7 +610,6 @@ run](https://github.com/cube2222/octosql#Benchmarks).
 Not included:
 * clickhouse-local: faster than any of these but over 2GB so not a reasonable general-purpose CLI
 * datafusion-cli: slower only than clickhouse-local but requires multiple commands to ingest CSV, can't do one-liners
-* sqlite3: requires multiple commands to ingest CSV, can't do one-liners
 * sqlite-utils: takes minutes to finish
 
 ### Notes
