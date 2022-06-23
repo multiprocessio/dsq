@@ -388,7 +388,7 @@ want = '[{"count": 1}]'
 test("https://github.com/multiprocessio/dsq/issues/67", to_run, want, sort=True)
 
 to_run = """./dsq ./testdata/regr/74.csv 'SELECT * FROM {}'"""
-want = '[{"a": 1, "a b": 2}]'
+want = '[{"a": "1", "a b": "2"}]'
 test("https://github.com/multiprocessio/dsq/issues/74", to_run, want, sort=True)
 
 
