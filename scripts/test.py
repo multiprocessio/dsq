@@ -362,6 +362,15 @@ want = """[{"test":1},
 {"test":1.1}]"""
 test("Number conversion, no query", to_run, want=want, sort=True)
 
+to_run = """./dsq testdata/csv/numberconvert.csv 'select * from {} where score > "90"'"""
+want = """[{"Score": "95", "Name": "Rainer"}]"""
+test("No number conversion, does alphabet ordering", to_run, want=want, sort=True)
+
+to_run = """./dsq --convert-numbers testdata/csv/numberconvert.csv 'select * from {} where score > "90"'"""
+want = """[{"Name":"Rainer","Score":95},
+{"Name":"Fountainer","Score":100}]"""
+test("Number conversion, number ordering", to_run, want=want, sort=True)
+
 # END OF TESTS
 
 # START OF REGRESSION TESTS
