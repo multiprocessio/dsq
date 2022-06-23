@@ -325,6 +325,43 @@ to_run = """./dsq testdata/basic_logs.csv 'SELECT split_part(url_host(request), 
 want = '[{"host":"com","count":2}]'
 test("URL functions", to_run, want=want, sort=True)
 
+# Number conversion
+to_run = """./dsq testdata/convert.csv 'SELECT * FROM {}'"""
+want = """[{"test":"1"},
+{"test":"1.1"},
+{"test":"+1"},
+{"test":"01"},
+{"test":"001"},
+{"test":"0001.1"}]"""
+test("No number conversion, with query", to_run, want=want, sort=True)
+
+to_run = """./dsq --convert-numbers testdata/convert.csv 'SELECT * FROM {}'"""
+want = """[{"test":1},
+{"test":1.1},
+{"test":1},
+{"test":1},
+{"test":1},
+{"test":1.1}]"""
+test("Number conversion, with query", to_run, want=want, sort=True)
+
+to_run = """./dsq testdata/convert.csv"""
+want = """[{"test":"1"},
+{"test":"1.1"},
+{"test":"+1"},
+{"test":"01"},
+{"test":"001"},
+{"test":"0001.1"}]"""
+test("No number conversion, no query", to_run, want=want, sort=True)
+
+to_run = """./dsq --convert-numbers testdata/convert.csv"""
+want = """[{"test":1},
+{"test":1.1},
+{"test":1},
+{"test":1},
+{"test":1},
+{"test":1.1}]"""
+test("Number conversion, no query", to_run, want=want, sort=True)
+
 # END OF TESTS
 
 # START OF REGRESSION TESTS
@@ -340,6 +377,11 @@ test("https://github.com/multiprocessio/dsq/issues/36", to_run, want, sort=True)
 to_run = """./dsq ./testdata/regr/67.jsonl 'SELECT COUNT(1) AS count FROM {}'"""
 want = '[{"count": 1}]'
 test("https://github.com/multiprocessio/dsq/issues/67", to_run, want, sort=True)
+
+to_run = """./dsq ./testdata/regr/74.csv 'SELECT * FROM {}'"""
+want = '[{"a": 1, "a b": 2}]'
+test("https://github.com/multiprocessio/dsq/issues/74", to_run, want, sort=True)
+
 
 # END OF REGRESSION TESTS
 

@@ -582,8 +582,10 @@ func _main() error {
 		connector.DatabaseConnectorInfo.Database.Database = cachedPath
 	}
 
+	justDumpResults := lastNonFlagArg == "" && !args.isInteractive
+
 	// Check if we can use direct SQLite writer
-	useSQLiteWriter := !args.noSQLiteWriter && !args.convertNumbers && !args.schema
+	useSQLiteWriter := !args.noSQLiteWriter && !args.schema && !justDumpResults
 	if useSQLiteWriter && !args.cacheSettings.Enabled {
 		tmp, err := ioutil.TempFile("", "dsq-sqlite-shared")
 		if err != nil {
@@ -624,13 +626,21 @@ func _main() error {
 		for i, file := range files {
 			panelId := uuid.New().String()
 
+			convertNumbers := args.convertNumbers
+
 			var w *runner.ResultWriter
 			if useSQLiteWriter {
 				tableName := fmt.Sprintf("t_%d", i)
-				sw, err := openSQLiteResultItemWriter(connector.DatabaseConnectorInfo.Database.Database, tableName)
+				sw, err := openSQLiteResultItemWriter(connector.DatabaseConnectorInfo.Database.Database, tableName, convertNumbers)
 				if err != nil {
 					return err
 				}
+
+				// Prevent DataStation/runner from
+				// doing conversion in Go. SQLite will
+				// handle this as part of the NUMERIC
+				// field types.
+				convertNumbers = false
 
 				w = runner.NewResultWriter(sw)
 			} else {
@@ -641,7 +651,7 @@ func _main() error {
 				}
 			}
 
-			panel, err := importFile(project.Id, panelId, file, mimetypeOverride[file], args.convertNumbers, w, !useSQLiteWriter)
+			panel, err := importFile(project.Id, panelId, file, mimetypeOverride[file], convertNumbers, w, !useSQLiteWriter)
 			if err != nil {
 				return err
 			}
@@ -655,7 +665,7 @@ func _main() error {
 	}
 
 	// No query, just dump transformed file directly out
-	if lastNonFlagArg == "" && !args.isInteractive {
+	if justDumpResults {
 		resultFile := ec.GetPanelResultsFile(project.Id, project.Pages[0].Panels[0].Id)
 		return dumpJSONFile(resultFile, args.pretty, args.schema)
 	}
