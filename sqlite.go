@@ -10,15 +10,17 @@ import (
 )
 
 type SQLiteResultItemWriter struct {
-	db        *sql.DB
-	fields    []string
-	panelId   string
-	rowBuffer runner.Vector[any]
+	db             *sql.DB
+	fields         []string
+	panelId        string
+	rowBuffer      runner.Vector[any]
+	convertNumbers bool
 }
 
-func openSQLiteResultItemWriter(f string, panelId string) (runner.ResultItemWriter, error) {
+func openSQLiteResultItemWriter(f string, panelId string, convertNumbers bool) (runner.ResultItemWriter, error) {
 	var sw SQLiteResultItemWriter
 	sw.panelId = panelId
+	sw.convertNumbers = convertNumbers
 
 	sw.rowBuffer = runner.Vector[any]{}
 
@@ -32,11 +34,17 @@ func openSQLiteResultItemWriter(f string, panelId string) (runner.ResultItemWrit
 }
 
 func (sw *SQLiteResultItemWriter) createTable() error {
+	fieldType := "TEXT"
+	if sw.convertNumbers {
+		fieldType = "NUMERIC"
+	}
+
 	var columns []string
 	for _, field := range sw.fields {
-		columns = append(columns, field+" TEXT")
+		columns = append(columns, `"`+field+`" `+fieldType)
 	}
-	_, err := sw.db.Exec("CREATE TABLE \"" + sw.panelId + "\"(" + strings.Join(columns, ", ") + ");")
+	create := "CREATE TABLE \"" + sw.panelId + "\"(" + strings.Join(columns, ", ") + ");"
+	_, err := sw.db.Exec(create)
 	return err
 }
 
@@ -166,5 +174,6 @@ func (sw *SQLiteResultItemWriter) Close() error {
 			return err
 		}
 	}
+
 	return sw.db.Close()
 }
