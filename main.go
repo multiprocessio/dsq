@@ -20,9 +20,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chzyer/readline"
 	"github.com/multiprocessio/datastation/runner"
 
+	"github.com/chzyer/readline"
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 )
@@ -343,6 +343,8 @@ type args struct {
 	isInteractive  bool
 	convertNumbers bool
 	noSQLiteWriter bool
+	noFieldsGuess bool
+	noPrefilter bool
 }
 
 func getArgs() (*args, error) {
@@ -351,6 +353,8 @@ func getArgs() (*args, error) {
 	args.noSQLiteWriter = strings.ToLower(os.Getenv("DSQ_NO_SQLITE_WRITER")) == "true"
 	args.convertNumbers = strings.ToLower(os.Getenv("DSQ_CONVERT_NUMBERS")) == "true"
 	args.cacheSettings.Enabled = strings.ToLower(os.Getenv("DSQ_CACHE")) == "true"
+	args.noFieldsGuess =strings.ToLower(os.Getenv("DSQ_NO_FIELDS_GUESS")) == "true"
+	args.noPrefilter =strings.ToLower(os.Getenv("DSQ_NO_PREFILTER")) == "true"
 
 	osArgs := os.Args[1:]
 	for i := 0; i < len(osArgs); i++ {
@@ -427,8 +431,18 @@ func getArgs() (*args, error) {
 			continue
 		}
 
-		if arg == "--no-sqlite-writer" {
+		if arg == "-nsw" || arg == "--no-sqlite-writer" {
 			args.noSQLiteWriter = true
+			continue
+		}
+
+		if arg == "-np" || arg == "--no-prefilter" {
+			args.noPrefilter = true
+			continue
+		}
+
+		if arg == "-nfg" || arg == "--no-fields-guess" {
+			args.noFieldsGuess = true
 			continue
 		}
 
@@ -482,7 +496,7 @@ func _main() error {
 		return nil
 	}
 
-	lastNonFlagArg := ""
+	query := ""
 	files := args.nonFlagArgs
 
 	// Grab from stdin into local file
@@ -507,8 +521,8 @@ func _main() error {
 	// If -f|--file not present, query is the last argument
 	if args.sqlFile == "" {
 		if len(files) > 1 {
-			lastNonFlagArg = files[len(files)-1]
-			if strings.Contains(lastNonFlagArg, " ") {
+			query = files[len(files)-1]
+			if strings.Contains(query, " ") {
 				files = files[:len(files)-1]
 			}
 		}
@@ -519,8 +533,8 @@ func _main() error {
 			return errors.New("Error opening sql file: " + err.Error())
 		}
 
-		lastNonFlagArg = string(content)
-		if lastNonFlagArg == "" {
+		query = string(content)
+		if query == "" {
 			return errors.New("SQL file is empty.")
 		}
 	}
@@ -582,7 +596,7 @@ func _main() error {
 		connector.DatabaseConnectorInfo.Database.Database = cachedPath
 	}
 
-	justDumpResults := lastNonFlagArg == "" && !args.isInteractive
+	justDumpResults := query == "" && !args.isInteractive
 
 	// Check if we can use direct SQLite writer
 	useSQLiteWriter := !args.noSQLiteWriter && !args.schema && !justDumpResults
@@ -605,6 +619,7 @@ func _main() error {
 		mtm := runner.MimeType(mt)
 		useSQLiteWriter = useSQLiteWriter && (mtm == runner.CSVMimeType ||
 			mtm == runner.TSVMimeType ||
+			mtm == runner.JSONLinesMimeType ||
 			mtm == runner.RegexpLinesMimeType)
 		if !useSQLiteWriter {
 			break
@@ -621,8 +636,25 @@ func _main() error {
 		}
 	}
 
+
+	var fieldsGuess []string
+	var prefilter func(map[string]any) bool
+	if query != "" && (!args.noFieldsGuess || !args.noPrefilter) {
+		a, ok := parse(rewriteQuery(query, &map[string]string{"0": "t_0"}))
+		if ok && !args.noFieldsGuess {
+			fieldsGuess, ok = identifiers(a)
+			if !ok {
+				fieldsGuess = nil
+			}
+		}
+
+		if ok && !args.noPrefilter {
+			prefilter = filter(a)
+		}
+	}
+
 	// When dumping schema, need to injest even if cache is on.
-	if !args.cacheSettings.CachePresent || !args.cacheSettings.Enabled || lastNonFlagArg == "" {
+	if !args.cacheSettings.CachePresent || !args.cacheSettings.Enabled || query == "" {
 		for i, file := range files {
 			panelId := uuid.New().String()
 
@@ -631,7 +663,14 @@ func _main() error {
 			var w *runner.ResultWriter
 			if useSQLiteWriter {
 				tableName := fmt.Sprintf("t_%d", i)
-				sw, err := openSQLiteResultItemWriter(connector.DatabaseConnectorInfo.Database.Database, tableName, convertNumbers)
+				sw, err := openSQLiteResultItemWriter(
+					connector.DatabaseConnectorInfo.Database.Database,
+					tableName,
+					SQLiteResultItemWriterOptions{
+						convertNumbers: convertNumbers,
+						prefilter: prefilter,
+						fieldsOverride: fieldsGuess,
+					})
 				if err != nil {
 					return err
 				}
@@ -651,7 +690,14 @@ func _main() error {
 				}
 			}
 
-			panel, err := importFile(project.Id, panelId, file, mimetypeOverride[file], convertNumbers, w, !useSQLiteWriter)
+			panel, err := importFile(
+				project.Id,
+				panelId,
+				file,
+				mimetypeOverride[file],
+				convertNumbers,
+				w,
+				!useSQLiteWriter)
 			if err != nil {
 				return err
 			}
@@ -685,7 +731,7 @@ func _main() error {
 		return repl(project, &ec, args, files, resolveDM_getPanelToId)
 	}
 
-	return runQuery(lastNonFlagArg, project, &ec, args, files, resolveDM_getPanelToId)
+	return runQuery(query, project, &ec, args, files, resolveDM_getPanelToId)
 }
 
 func main() {
