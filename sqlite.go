@@ -11,16 +11,16 @@ import (
 
 type SQLiteResultItemWriterOptions struct {
 	convertNumbers bool
-	prefilter func(map[string]any) bool
+	prefilter      func(map[string]any) bool
 	fieldsOverride []string
 }
 
 type SQLiteResultItemWriter struct {
 	tableCreated bool
-	db             *sql.DB
-	fields         []string
-	panelId        string
-	rowBuffer      runner.Vector[any]
+	db           *sql.DB
+	fields       []string
+	panelId      string
+	rowBuffer    runner.Vector[any]
 
 	SQLiteResultItemWriterOptions
 }

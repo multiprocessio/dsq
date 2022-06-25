@@ -343,8 +343,8 @@ type args struct {
 	isInteractive  bool
 	convertNumbers bool
 	noSQLiteWriter bool
-	noFieldsGuess bool
-	noPrefilter bool
+	noFieldsGuess  bool
+	noPrefilter    bool
 }
 
 func getArgs() (*args, error) {
@@ -353,8 +353,8 @@ func getArgs() (*args, error) {
 	args.noSQLiteWriter = strings.ToLower(os.Getenv("DSQ_NO_SQLITE_WRITER")) == "true"
 	args.convertNumbers = strings.ToLower(os.Getenv("DSQ_CONVERT_NUMBERS")) == "true"
 	args.cacheSettings.Enabled = strings.ToLower(os.Getenv("DSQ_CACHE")) == "true"
-	args.noFieldsGuess =strings.ToLower(os.Getenv("DSQ_NO_FIELDS_GUESS")) == "true"
-	args.noPrefilter =strings.ToLower(os.Getenv("DSQ_NO_PREFILTER")) == "true"
+	args.noFieldsGuess = strings.ToLower(os.Getenv("DSQ_NO_FIELDS_GUESS")) == "true"
+	args.noPrefilter = strings.ToLower(os.Getenv("DSQ_NO_PREFILTER")) == "true"
 
 	osArgs := os.Args[1:]
 	for i := 0; i < len(osArgs); i++ {
@@ -636,7 +636,6 @@ func _main() error {
 		}
 	}
 
-
 	var fieldsGuess []string
 	var prefilter func(map[string]any) bool
 	if query != "" && (!args.noFieldsGuess || !args.noPrefilter) {
@@ -668,7 +667,7 @@ func _main() error {
 					tableName,
 					SQLiteResultItemWriterOptions{
 						convertNumbers: convertNumbers,
-						prefilter: prefilter,
+						prefilter:      prefilter,
 						fieldsOverride: fieldsGuess,
 					})
 				if err != nil {
