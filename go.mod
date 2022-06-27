@@ -3,12 +3,12 @@ module github.com/multiprocessio/dsq
 go 1.18
 
 // Uncomment for local development (and re-run `go mod tidy`)
-replace github.com/multiprocessio/datastation/runner => ../datastation/runner
+// replace github.com/multiprocessio/datastation/runner => ../datastation/runner
 
 require (
 	github.com/chzyer/readline v1.5.0
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220616090857-d42388371862
+	github.com/multiprocessio/datastation/runner v0.0.0-20220627185241-7ae4dcfc07a8
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pganalyze/pg_query_go/v2 v2.1.0
 	github.com/stretchr/testify v1.7.1
@@ -118,5 +118,5 @@ require (
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
