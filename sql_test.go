@@ -61,8 +61,8 @@ func Test_identifiers(t *testing.T) {
 
 	for _, test := range tests {
 		t.Logf("Testing: %s", test.in)
-		s, err := parse(test.in)
-		assert.Nil(t, err)
+		s, ok := parse(test.in)
+		assert.True(t, ok)
 
 		idents, ok := identifiers(s)
 		assert.Equal(t, test.idents, idents)
@@ -112,8 +112,8 @@ func Test_filter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Logf("Testing: %s", test.query)
-		s, err := parse(test.query)
-		assert.Nil(t, err)
+		s, ok := parse(test.query)
+		assert.True(t, ok)
 
 		f := filter(s)
 		var end []map[string]any
