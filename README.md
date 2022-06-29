@@ -574,6 +574,7 @@ your environment. Turning this on disables some optimizations.
 | ORC | `orc` | `orc` ||
 | Parquet | `parquet` | `parquet` ||
 | Avro | `avro` || `application/avro` || 
+| YAML | `yaml`, `yml` | `application/yaml` || 
 | Excel | `xlsx`, `xls` | `application/vnd.ms-excel` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
 | ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
 | Apache Error Logs | NA | `text/apache2error` | Currently only works if being piped in. |
@@ -591,7 +592,7 @@ kinds of SQL queries on arbitrary (structured) data.
 
 | Name | Link | Caching | Engine | Supported File Types | Binary Size |
 |-|---|-|-|------------------------------------------------------------------------|-|
-| dsq | Here | Yes | SQLite | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), ORC, Avro, Logs | 49M |
+| dsq | Here | Yes | SQLite | CSV, TSV, a few variations of JSON, Parquet, Excel, ODS (OpenOffice Calc), ORC, Avro, YAML, Logs | 49M |
 | q | http://harelba.github.io/q/ | Yes | SQLite | CSV, TSV | 82M |
 | textql | https://github.com/dinedal/textql | No | SQLite | CSV, TSV | 7.3M |
 | octoql | https://github.com/cube2222/octosql | No | Custom engine | JSON, CSV, Excel, Parquet | 18M |
