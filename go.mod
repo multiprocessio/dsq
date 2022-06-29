@@ -8,7 +8,7 @@ go 1.18
 require (
 	github.com/chzyer/readline v1.5.0
 	github.com/google/uuid v1.3.0
-	github.com/multiprocessio/datastation/runner v0.0.0-20220628000637-8472e7fd559e
+	github.com/multiprocessio/datastation/runner v0.0.0-20220629131342-6165f9d14a67
 	github.com/olekukonko/tablewriter v0.0.5
 )
 
