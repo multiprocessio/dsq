@@ -26,12 +26,6 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-func openTruncate(out string) (*os.File, error) {
-	base := filepath.Dir(out)
-	_ = os.MkdirAll(base, os.ModePerm)
-	return os.OpenFile(out, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, os.ModePerm)
-}
-
 func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 	if strings.Contains(fileExtensionOrContentType, string(filepath.Separator)) {
 		return runner.MimeType(fileExtensionOrContentType)
