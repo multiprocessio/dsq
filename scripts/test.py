@@ -184,6 +184,11 @@ to_run = """./dsq ./testdata/avro/test_data.avro 'SELECT COUNT(*) FROM {} WHERE 
 want = '[{"COUNT(*)":25}]'
 test("Supports Avro files", to_run, want, sort=True)
 
+# YAML support
+to_run = """./dsq ./testdata/yaml/userdata.yaml 'SELECT COUNT(*) FROM {} WHERE activated=false'"""
+want = '[{"COUNT(*)":3}]'
+test("Supports YAML files", to_run, want, sort=True)
+
 # Version test
 to_run = """./dsq -v"""
 want_stderr = "dsq latest\n"

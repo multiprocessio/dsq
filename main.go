@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -26,12 +25,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 )
-
-func openTruncate(out string) (*os.File, error) {
-	base := filepath.Dir(out)
-	_ = os.MkdirAll(base, os.ModePerm)
-	return os.OpenFile(out, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, os.ModePerm)
-}
 
 func resolveContentType(fileExtensionOrContentType string) runner.MimeType {
 	if strings.Contains(fileExtensionOrContentType, string(filepath.Separator)) {
@@ -502,7 +495,7 @@ func _main() error {
 	// Grab from stdin into local file
 	mimetypeOverride := map[string]string{}
 	if args.pipedMimetype != "" {
-		pipedTmp, err := ioutil.TempFile("", "dsq-stdin")
+		pipedTmp, err := os.CreateTemp("", "dsq-stdin")
 		if err != nil {
 			return err
 		}
@@ -552,7 +545,7 @@ func _main() error {
 			args.cacheSettings.Enabled = false
 		}
 	} else {
-		projectTmp, err := ioutil.TempFile("", "dsq-project")
+		projectTmp, err := os.CreateTemp("", "dsq-project")
 		if err != nil {
 			return err
 		}
@@ -601,7 +594,7 @@ func _main() error {
 	// Check if we can use direct SQLite writer
 	useSQLiteWriter := !args.noSQLiteWriter && !args.schema && !justDumpResults
 	if useSQLiteWriter && !args.cacheSettings.Enabled {
-		tmp, err := ioutil.TempFile("", "dsq-sqlite-shared")
+		tmp, err := os.CreateTemp("", "dsq-sqlite-shared")
 		if err != nil {
 			return err
 		}
