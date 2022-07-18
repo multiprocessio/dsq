@@ -120,7 +120,11 @@ func evalNode(n *q.Node, row map[string]any) any {
 
 	if c := n.GetAConst(); c != nil {
 		if i := c.GetVal().GetInteger(); i != nil {
-			return fmt.Sprintf("%d", i.Ival)
+			return i.String()
+		}
+
+		if f := c.GetVal().GetFloat(); f != nil {
+			return f.GetStr()
 		}
 
 		if s := c.GetVal().GetString_(); s != nil {
