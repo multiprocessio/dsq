@@ -580,6 +580,7 @@ your environment. Turning this on disables some optimizations.
 | Apache Error Logs | NA | `text/apache2error` | Currently only works if being piped in. |
 | Apache Access Logs | NA | `text/apache2access` | Currently only works if being piped in. |
 | Nginx Access Logs | NA | `text/nginxaccess` | Currently only works if being piped in. |
+| LogFmt Logs | NA | `text/logfmt` | Currently only works if being piped in. |
 
 ## Engine
 
