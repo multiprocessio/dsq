@@ -1,14 +1,16 @@
 package main
 
-func parse(query string) (*q.SelectStmt, bool) {
+type SelectStmt struct{}
+
+func parse(query string) (*SelectStmt, bool) {
 	return nil, false
 }
 
-func identifiers(slct *q.SelectStmt) ([]string, bool) {
+func identifiers(slct *SelectStmt) ([]string, bool) {
 	return nil, false
 }
 
-func filter(slct *q.SelectStmt) func(m map[string]any) bool {
+func filter(slct *SelectStmt) func(m map[string]any) bool {
 	return func(_ map[string]any) bool {
 		return false
 	}

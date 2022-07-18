@@ -632,6 +632,7 @@ func _main() error {
 	var fieldsGuess []string
 	var prefilter func(map[string]any) bool
 	if query != "" && (!args.noFieldsGuess || !args.noPrefilter) {
+		fmt.Println("HERE?")
 		a, ok := parse(rewriteQuery(query, &map[string]string{"0": "t_0"}))
 		if ok && !args.noFieldsGuess {
 			fieldsGuess, ok = identifiers(a)
@@ -640,7 +641,9 @@ func _main() error {
 			}
 		}
 
+		fmt.Println("or here??")
 		if ok && !args.noPrefilter {
+			fmt.Println("here?")
 			prefilter = filter(a)
 		}
 	}
