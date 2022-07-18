@@ -9,18 +9,28 @@ import (
 	"github.com/multiprocessio/datastation/runner"
 )
 
-type SQLiteResultItemWriter struct {
-	db             *sql.DB
-	fields         []string
-	panelId        string
-	rowBuffer      runner.Vector[any]
+type SQLiteResultItemWriterOptions struct {
 	convertNumbers bool
+	prefilter      func(map[string]any) bool
+	fieldsOverride []string
 }
 
-func openSQLiteResultItemWriter(f string, panelId string, convertNumbers bool) (runner.ResultItemWriter, error) {
+type SQLiteResultItemWriter struct {
+	tableCreated bool
+	db           *sql.DB
+	fields       []string
+	panelId      string
+	rowBuffer    runner.Vector[any]
+
+	SQLiteResultItemWriterOptions
+}
+
+func openSQLiteResultItemWriter(f string, panelId string, opts SQLiteResultItemWriterOptions) (runner.ResultItemWriter, error) {
 	var sw SQLiteResultItemWriter
 	sw.panelId = panelId
-	sw.convertNumbers = convertNumbers
+	sw.SQLiteResultItemWriterOptions = opts
+
+	sw.fields = opts.fieldsOverride
 
 	sw.rowBuffer = runner.Vector[any]{}
 
@@ -127,15 +137,26 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 		return fmt.Errorf("Row must be a map, got: %#v", r)
 	}
 
-	if len(sw.fields) == 0 {
-		for key := range m {
-			sw.fields = append(sw.fields, key)
+	if sw.prefilter != nil {
+		canSkip := sw.prefilter(m)
+		if canSkip {
+			return nil
+		}
+	}
+
+	if !sw.tableCreated {
+		if len(sw.fields) == 0 {
+			for key := range m {
+				sw.fields = append(sw.fields, key)
+			}
 		}
 
 		err := sw.createTable()
 		if err != nil {
 			return err
 		}
+
+		sw.tableCreated = true
 	}
 
 	for _, field := range sw.fields {
@@ -147,6 +168,9 @@ func (sw *SQLiteResultItemWriter) WriteRow(r any, written int) error {
 				return err
 			}
 			v = string(bs)
+			// TODO: don't keep this
+		case map[string]any:
+			v = nil
 		}
 		sw.rowBuffer.Append(v)
 	}

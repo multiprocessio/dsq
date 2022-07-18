@@ -326,7 +326,7 @@ want = '[{"host":"age.com","count":2}]'
 test("URL functions", to_run, want=want, sort=True)
 
 # URL functions, split_part
-to_run = """./dsq testdata/basic_logs.csv 'SELECT split_part(url_host(request), ".", -1) host, count(1) count FROM {} group by host' """
+to_run = """./dsq testdata/basic_logs.csv "SELECT split_part(url_host(request), '.', -1) host, count(1) count FROM {} group by host" """
 want = '[{"host":"com","count":2}]'
 test("URL functions", to_run, want=want, sort=True)
 
