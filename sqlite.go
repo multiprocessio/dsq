@@ -48,14 +48,6 @@ func (sw *SQLiteResultItemWriter) createTable() error {
 	return err
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
-
 func (sw *SQLiteResultItemWriter) makeQuery(rows int) string {
 	var query strings.Builder
 	query.WriteString("INSERT INTO \"" + sw.panelId + "\" VALUES ")
