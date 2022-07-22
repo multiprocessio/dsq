@@ -17,6 +17,8 @@ jobs:
       - run: ./scripts/ci/prepare_linux.sh
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
+        with:
+          args: --timeout=10000
       - run: go test -race -cover
       - run: gofmt -w -s .
       - run: ./scripts/fail_on_diff.sh
