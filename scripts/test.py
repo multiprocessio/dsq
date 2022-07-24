@@ -190,7 +190,7 @@ want = '[{"COUNT(*)":3}]'
 test("Supports YAML files", to_run, want, sort=True)
 
 # LogFmt support
-to_run = """cat ./testdata/logfmt/log.txt | ./dsq -s text/logfmt 'SELECT level FROM {}'"""
+to_run = """./dsq ./testdata/logfmt/log.logfmt 'SELECT level FROM {}'"""
 want = """[{"level":"debug"},
 {"level":"info"},
 {"level":"warning"},
