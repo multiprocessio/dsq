@@ -457,7 +457,7 @@ Examples:
     $ dsq testdata/join/users.csv testdata/join/ages.json \
           "select {0}.name, {1}.age from {0} join {1} on {0}.id = {1}.id"
 
-See the repo for more details: https://github.com/multiprocessio/dsq.`
+See the repo for more details: https://github.com/multiprocessio/dsq`
 
 func _main() error {
 	rand.Seed(time.Now().UnixNano())

@@ -189,6 +189,15 @@ to_run = """./dsq ./testdata/yaml/userdata.yaml 'SELECT COUNT(*) FROM {} WHERE a
 want = '[{"COUNT(*)":3}]'
 test("Supports YAML files", to_run, want, sort=True)
 
+# LogFmt support
+to_run = """./dsq ./testdata/logfmt/log.logfmt 'SELECT level FROM {}'"""
+want = """[{"level":"debug"},
+{"level":"info"},
+{"level":"warning"},
+{"level":"debug"},
+{"level":"panic"}]"""
+test("Supports LogFmt log files", to_run, want, sort=True)
+
 # Version test
 to_run = """./dsq -v"""
 want_stderr = "dsq latest\n"
