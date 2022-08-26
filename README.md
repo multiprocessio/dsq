@@ -564,23 +564,23 @@ your environment. Turning this on disables some optimizations.
 
 ## Supported Data Types
 
-| Name | File Extension(s) | Mime Type | Notes |
-|-----------|-|-|--------------------|
-| CSV | `csv` | `text/csv` | |
-| TSV | `tsv`, `tab` | `text/tab-separated-values` | |
-| JSON | `json` | `application/json` | Must be an array of objects or a [path to an array of objects](https://github.com/multiprocessio/dsq#array-of-objects-nested-within-an-object). |
-| Newline-delimited JSON | `ndjson`, `jsonl` | `application/jsonlines` ||
-| Concatenated JSON | `cjson` | `application/jsonconcat` ||
-| ORC | `orc` | `orc` ||
-| Parquet | `parquet` | `parquet` ||
-| Avro | `avro` || `application/avro` || 
-| YAML | `yaml`, `yml` | `application/yaml` || 
-| Excel | `xlsx`, `xls` | `application/vnd.ms-excel` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
-| ODS | `ods` |`application/vnd.oasis.opendocument.spreadsheet` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets). |
-| Apache Error Logs | NA | `text/apache2error` | Currently only works if being piped in. |
-| Apache Access Logs | NA | `text/apache2access` | Currently only works if being piped in. |
-| Nginx Access Logs | NA | `text/nginxaccess` | Currently only works if being piped in. |
-| LogFmt Logs | NA | `text/logfmt` | Currently only works if being piped in. |
+| Name                   | File Extension(s) | Mime Type                                        | Notes                                                                                                                                           |   |
+|------------------------|-------------------|--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|---|
+| CSV                    | `csv`             | `text/csv`                                       |                                                                                                                                                 |   |
+| TSV                    | `tsv`, `tab`      | `text/tab-separated-values`                      |                                                                                                                                                 |   |
+| JSON                   | `json`            | `application/json`                               | Must be an array of objects or a [path to an array of objects](https://github.com/multiprocessio/dsq#array-of-objects-nested-within-an-object). |   |
+| Newline-delimited JSON | `ndjson`, `jsonl` | `application/jsonlines`                          |                                                                                                                                                 |   |
+| Concatenated JSON      | `cjson`           | `application/jsonconcat`                         |                                                                                                                                                 |   |
+| ORC                    | `orc`             | `orc`                                            |                                                                                                                                                 |   |
+| Parquet                | `parquet`         | `parquet`                                        |                                                                                                                                                 |   |
+| Avro                   | `avro`            |                                                  | `application/avro`                                                                                                                              |   |
+| YAML                   | `yaml`, `yml`     | `application/yaml`                               |                                                                                                                                                 |   |
+| Excel                  | `xlsx`, `xls`     | `application/vnd.ms-excel`                       | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets).                      |   |
+| ODS                    | `ods`             | `application/vnd.oasis.opendocument.spreadsheet` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets).                      |   |
+| Apache Error Logs      | NA                | `text/apache2error`                              | Currently only works if being piped in.                                                                                                         |   |
+| Apache Access Logs     | NA                | `text/apache2access`                             | Currently only works if being piped in.                                                                                                         |   |
+| Nginx Access Logs      | NA                | `text/nginxaccess`                               | Currently only works if being piped in.                                                                                                         |   |
+| LogFmt Logs            | `logfmt`          | `text/logfmt`                                    |                                                                                                                                                 |   |
 
 ## Engine
 
