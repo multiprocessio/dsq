@@ -6,7 +6,7 @@ go 1.19
 // replace github.com/multiprocessio/datastation/runner => ../datastation/runner
 
 require (
-	github.com/chzyer/readline v1.5.0
+	github.com/chzyer/readline v1.5.1
 	github.com/google/uuid v1.3.0
 	github.com/multiprocessio/datastation/runner v0.0.0-20220828221447-66b77f0cfe41
 	github.com/olekukonko/tablewriter v0.0.5
