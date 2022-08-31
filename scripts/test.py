@@ -169,10 +169,14 @@ to_run = """./dsq ./testdata/path/path.json "SELECT * FROM {'data.data'} ORDER B
 want = '[{"id":3,"name":"Minh"},{"id":1,"name":"Corah"}]'
 test("Supports path specification shorthand", to_run, want, sort=True)
 
-# Excel multiple sheets
-to_run = """./dsq testdata/excel/multiple-sheets.xlsx 'SELECT COUNT(1) AS n FROM {0, "Sheet2"}'"""
-want = '[{"n": 700}]'
-test("Supports Excel with multiple sheets", to_run, want, sort=True)
+# Excel multiple sheets together
+to_run = """./dsq testdata/excel/simple-multiple-sheets.xlsx 'SELECT a, b, c FROM {0, "Sheet1"}'"""
+want = '[{"A": "", "B": "1", "C": "2"}, {"A": "", "B": "3", "C": "4"}]'
+test("Supports Excel with multiple sheets, sheet 1", to_run, want, sort=True)
+
+to_run = """./dsq testdata/excel/simple-multiple-sheets.xlsx 'SELECT a, b, c FROM {0, "Sheet2"}'"""
+want = '[{"A": "", "B": "a", "C": "b"}, {"A": "", "B": "c", "C": "d"}]'
+test("Supports Excel with multiple sheets, sheet 2", to_run, want, sort=True)
 
 # ORC support
 to_run = """./dsq ./testdata/orc/test_data.orc 'SELECT COUNT(*) FROM {} WHERE _col8="China"'"""
