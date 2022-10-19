@@ -1,9 +1,13 @@
 {
-    "data": {
-	"data": [
-	    {"id": 1, "name": "Corah"},
-	    {"id": 3, "name": "Minh"}
-	]
-    },
-    "total": 2
+  "data": {
+    "data": [
+      {"id": 1, "name": "Corah"},
+      {"id": 3, "name": "Minh"}
+    ],
+    "data2": [
+      {"id": 2, "name": "Corah2"},
+      {"id": 4, "name": "Minh2"}
+    ]
+  },
+  "total": 2
 }
