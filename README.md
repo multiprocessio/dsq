@@ -148,6 +148,14 @@ $ dsq --pretty testdata/userdata.parquet 'select count(*) from {}'
 +----------+
 ```
 
+An alternative that also contains the original order of the columns in the select,
+is to pipe it into a program that can output pretty table.
+E.g. if you have [visidata](https://github.com/saulpw/visidata) installed, you could just call
+
+```bash
+$ dsq testdata/userdata.parquet 'select count(*) from {}' | vd -f json
+```
+
 ### Piping data to dsq
 
 When piping data to `dsq` you need to set the `-s` flag and specify
