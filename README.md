@@ -14,6 +14,7 @@ list](https://docs.google.com/forms/d/e/1FAIpQLSfYF3AZivacRrQWanC-skd0iI23ermwPd
     - [Pretty print](#pretty-print)
     - [Piping data to dsq](#piping-data-to-dsq)
     - [Multiple files and joins](#multiple-files-and-joins)
+    - [SQL query from file](#sql-query-from-file)
     - [Transforming data to JSON without querying](#transforming-data-to-json-without-querying)
     - [Array of objects nested within an object](#array-of-objects-nested-within-an-object)
         - [Multiple Excel sheets](#multiple-excel-sheets)
@@ -195,7 +196,7 @@ $ dsq testdata/join/users.csv testdata/join/ages.json \
 {"age":33,"name":"Micah"}]
 ```
 
-### SQL Query from File
+### SQL query from file
 
 As your query becomes more complex, it might be useful to store it in a file
 rather than specify it on the command line. To do so replace the query argument
