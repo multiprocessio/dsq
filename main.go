@@ -438,6 +438,7 @@ var HELP = `dsq (Version ` + Version + `) - commandline SQL engine for data file
 Usage:  dsq [file...] $query
         dsq $file [query]
         cat $file | dsq -s $filetype [query]
+        dsq $file -f $queryfile
 
 dsq is a tool for running SQL on one or more data files. It uses
 SQLite's SQL dialect. Files as tables are accessible via "{N}" where N

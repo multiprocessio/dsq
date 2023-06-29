@@ -195,6 +195,16 @@ $ dsq testdata/join/users.csv testdata/join/ages.json \
 {"age":33,"name":"Micah"}]
 ```
 
+### SQL Query from File
+
+As your query becomes more complex, it might be useful to store it in a file
+rather than specify it on the command line. To do so replace the query argument
+with `--file` or `-f` and the path to the file. 
+
+```bash
+$ dsq data1.csv data2.csv -f query.sql
+```
+
 ### Transforming data to JSON without querying
 
 As a shorthand for `dsq testdata.csv "SELECT * FROM {}"` to convert
