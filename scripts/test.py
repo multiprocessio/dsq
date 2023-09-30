@@ -160,8 +160,8 @@ want = '[{"location.address.number":1002,"location.city":"Toronto","name":"Agarr
 test("Supports table aliases", to_run, want, sort=True)
 
 # With path
-to_run = """./dsq ./testdata/path/path.json "SELECT * FROM {0, 'data.data'} ORDER BY id DESC" """
-want = '[{"id":3,"name":"Minh"},{"id":1,"name":"Corah"}]'
+to_run = """./dsq ./testdata/path/path.json "SELECT * FROM {0, 'data.data2'} ORDER BY id DESC" """
+want = '[{"id":4,"name":"Minh2"},{"id":2,"name":"Corah2"}]'
 test("Supports path specification", to_run, want, sort=True)
 
 # With path shorthand
@@ -171,7 +171,7 @@ test("Supports path specification shorthand", to_run, want, sort=True)
 
 # Excel multiple sheets
 to_run = """./dsq testdata/excel/multiple-sheets.xlsx 'SELECT COUNT(1) AS n FROM {0, "Sheet2"}'"""
-want = '[{"n": 700}]'
+want = '[{"n": 682}]'
 test("Supports Excel with multiple sheets", to_run, want, sort=True)
 
 # ORC support

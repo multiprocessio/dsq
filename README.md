@@ -28,6 +28,7 @@ list](https://docs.google.com/forms/d/e/1FAIpQLSfYF3AZivacRrQWanC-skd0iI23ermwPd
     - [Pretty print](#pretty-print)
     - [Piping data to dsq](#piping-data-to-dsq)
     - [Multiple files and joins](#multiple-files-and-joins)
+    - [SQL query from file](#sql-query-from-file)
     - [Transforming data to JSON without querying](#transforming-data-to-json-without-querying)
     - [Array of objects nested within an object](#array-of-objects-nested-within-an-object)
         - [Multiple Excel sheets](#multiple-excel-sheets)
@@ -79,7 +80,7 @@ $ brew install dsq
 On macOS, Linux, and WSL you can run the following:
 
 ```bash
-$ VERSION="v0.22.0"
+$ VERSION="v0.23.0"
 $ FILE="dsq-$(uname -s | awk '{ print tolower($0) }')-x64-$VERSION.zip"
 $ curl -LO "https://github.com/multiprocessio/dsq/releases/download/$VERSION/$FILE"
 $ unzip $FILE
@@ -207,6 +208,16 @@ $ dsq testdata/join/users.csv testdata/join/ages.json \
 [{"age":88,"name":"Ted"},
 {"age":56,"name":"Marjory"},
 {"age":33,"name":"Micah"}]
+```
+
+### SQL query from file
+
+As your query becomes more complex, it might be useful to store it in a file
+rather than specify it on the command line. To do so replace the query argument
+with `--file` or `-f` and the path to the file. 
+
+```bash
+$ dsq data1.csv data2.csv -f query.sql
 ```
 
 ### Transforming data to JSON without querying
@@ -589,7 +600,7 @@ your environment. Turning this on disables some optimizations.
 | Concatenated JSON      | `cjson`           | `application/jsonconcat`                         |                                                                                                                                                 |   |
 | ORC                    | `orc`             | `orc`                                            |                                                                                                                                                 |   |
 | Parquet                | `parquet`         | `parquet`                                        |                                                                                                                                                 |   |
-| Avro                   | `avro`            |                                                  | `application/avro`                                                                                                                              |   |
+| Avro                   | `avro`            | `application/avro`                               |                                                                                                                                                 |   |
 | YAML                   | `yaml`, `yml`     | `application/yaml`                               |                                                                                                                                                 |   |
 | Excel                  | `xlsx`, `xls`     | `application/vnd.ms-excel`                       | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets).                      |   |
 | ODS                    | `ods`             | `application/vnd.oasis.opendocument.spreadsheet` | If you have multiple sheets, you must [specify a sheet path](https://github.com/multiprocessio/dsq#multiple-excel-sheets).                      |   |
