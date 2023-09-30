@@ -12,6 +12,8 @@ dsq based on SQLite. For example, column-oriented storage and
 vectorized execution, let alone JIT-compiled expression evaluation,
 are possible with these other projects.
 
+[More here](https://twitter.com/eatonphil/status/1708130091425784146).
+
 # Commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more
 
 Since Github doesn't provide a great way for you to learn about new
