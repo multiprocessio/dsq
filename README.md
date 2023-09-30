@@ -1,3 +1,17 @@
+# Not under active development
+
+While development may continue in the future with a different
+architecture, for the moment you should probably instead use
+[DuckDB](https://github.com/duckdb/duckdb),
+[ClickHouse-local](https://clickhouse.com/docs/en/operations/utilities/clickhouse-local),
+or [GlareDB (based on
+DataFusion)](https://github.com/GlareDB/glaredb).
+
+These are built on stronger analytics foundations than projects like
+dsq based on SQLite. For example, column-oriented storage and
+vectorized execution, let alone JIT-compiled expression evaluation,
+are possible with these other projects.
+
 # Commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more
 
 Since Github doesn't provide a great way for you to learn about new
